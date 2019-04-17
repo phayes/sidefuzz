@@ -1,4 +1,3 @@
-#[link(name="src/cpucycles.c")]
 extern "C" {
     pub fn unsafe_cpucycles() -> libc::int64_t;
 }
