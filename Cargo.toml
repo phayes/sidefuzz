@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 rand = "0.6.5"
+hex = "0.3.2"
+statrs = "0.10.0"
+libc="0.2.51"
