@@ -12,10 +12,10 @@ const MUTATION_RATE: f64 = 0.05;
 const LARGE_MUTATION_RATIO: f64 = 0.25;
 
 // Directly clone this ratio of top performers
-const CLONE_RATIO: f64 = 0.25;
+const CLONE_RATIO: f64 = 0.10;
 
 // Breed from this top percentage of the population
-const BREEDING_POOL: f64 = 0.50;
+const BREEDING_POOL: f64 = 0.25;
 
 pub struct Optimizer<T>
 where
@@ -179,7 +179,7 @@ mod tests {
       score
     });
 
-    // Run one thousand times
+    // Run one thousand generations
     for _ in 0..1000 {
       optimizer.step();
     }

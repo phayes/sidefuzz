@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-// XXX call also cpuid?
-// cf http://www.intel.com/content/www/us/en/embedded/training/ia-32-ia-64-benchmark-code-execution-paper.html
+// TODO, also call cpuid?
+// See http://www.intel.com/content/www/us/en/embedded/training/ia-32-ia-64-benchmark-code-execution-paper.html
 int64_t unsafe_cpucycles(void)
 {
   unsigned int hi, lo;
