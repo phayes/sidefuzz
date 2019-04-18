@@ -17,6 +17,3 @@ pub fn calculate_t(first: &[f64], second: &[f64]) -> f64 {
 
   t
 }
-
-// Increase sample size and evalulate two different null hypothesis:
-// 1. populations are the same

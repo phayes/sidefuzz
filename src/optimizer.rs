@@ -1,3 +1,5 @@
+use crate::InputPair;
+use crate::ScoredInputPair;
 use rand::{seq::SliceRandom, Rng};
 
 // TODO: Find optimal values for these consts
@@ -21,7 +23,7 @@ pub struct Optimizer<T>
 where
   T: Fn(&[u8], &[u8]) -> f64,
 {
-  population: Vec<(Vec<u8>, Vec<u8>)>,
+  population: Vec<InputPair>,
   fitness: T,
 }
 
@@ -37,38 +39,50 @@ where
   }
 
   // Get the population, ordered most fit to least fit.
-  pub fn population(&self) -> Vec<(Vec<u8>, Vec<u8>)> {
-    // Get fitness of all individuals
-    let mut scored: Vec<(f64, (Vec<u8>, Vec<u8>))> = Vec::with_capacity(self.population.len());
+  pub fn population(&self) -> Vec<InputPair> {
+    let mut scored = self.scored_population();
 
-    for individual in self.population.iter() {
-      let individual = individual.clone();
-      let fitness = (self.fitness)(&individual.0, &individual.1);
-      scored.push((fitness, individual));
-    }
-
-    // Sort most fit to least fit
-    scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
-
-    let mut result: Vec<(Vec<u8>, Vec<u8>)> = Vec::with_capacity(self.population.len());
+    let mut result: Vec<InputPair> = Vec::with_capacity(self.population.len());
     for individual in scored.drain(..) {
-      result.push(individual.1);
+      result.push(individual.pair);
     }
 
     result
   }
 
-  pub fn step(&mut self) {
+  pub fn scored_population(&self) -> Vec<ScoredInputPair> {
     // Get fitness of all individuals
-    let mut scored: Vec<(f64, (Vec<u8>, Vec<u8>))> = Vec::with_capacity(self.population.len());
+    let mut scored: Vec<ScoredInputPair> = Vec::with_capacity(self.population.len());
 
-    for individual in self.population.drain(..) {
-      let fitness = (self.fitness)(&individual.0, &individual.1);
-      scored.push((fitness, individual));
+    for individual in self.population.iter() {
+      let individual = individual.clone();
+      let fitness = (self.fitness)(&individual.first, &individual.second);
+      scored.push(ScoredInputPair {
+        score: fitness,
+        pair: individual,
+      });
     }
 
     // Sort most fit to least fit
-    scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+    scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+
+    scored
+  }
+
+  pub fn step(&mut self) {
+    // Get fitness of all individuals
+    let mut scored: Vec<ScoredInputPair> = Vec::with_capacity(self.population.len());
+
+    for individual in self.population.drain(..) {
+      let fitness = (self.fitness)(&individual.first, &individual.second);
+      scored.push(ScoredInputPair {
+        score: fitness,
+        pair: individual,
+      });
+    }
+
+    // Sort most fit to least fit
+    scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
 
     // Calculate number to clone and number to breed
     let num_clone: usize = (POPULATION_SIZE as f64 * CLONE_RATIO) as usize;
@@ -76,30 +90,30 @@ where
     let breed_fill: usize = POPULATION_SIZE - num_clone;
 
     // Create the next generation
-    let mut next_gen: Vec<(Vec<u8>, Vec<u8>)> = Vec::with_capacity(self.population.len());
+    let mut next_gen: Vec<InputPair> = Vec::with_capacity(self.population.len());
 
     // Clone the top contenders
     for n in 0..num_clone {
-      next_gen.push(scored[n].1.clone());
+      next_gen.push(scored[n].pair.clone());
     }
 
     // Breed and mutate the rest
     for _ in 0..breed_fill {
       // Select two individuals
-      let first = &scored[rand::thread_rng().gen_range(0, breed_pool)].1;
-      let second = &scored[rand::thread_rng().gen_range(0, breed_pool)].1;
+      let parent_one = &scored[rand::thread_rng().gen_range(0, breed_pool)].pair;
+      let parent_two = &scored[rand::thread_rng().gen_range(0, breed_pool)].pair;
 
-      let mut child = (
-        breed_slice(&first.0, &second.0),
-        breed_slice(&first.1, &second.1),
-      );
+      let mut child = InputPair {
+        first: breed_slice(&parent_one.first, &parent_two.first),
+        second: breed_slice(&parent_one.second, &parent_two.second),
+      };
 
       // Mutate
       if rand::thread_rng().gen_bool(MUTATION_RATE) {
         if rand::thread_rng().gen() {
-          mutate_slice(&mut child.0);
+          mutate_slice(&mut child.first);
         } else {
-          mutate_slice(&mut child.1);
+          mutate_slice(&mut child.second);
         }
       }
 
@@ -140,7 +154,7 @@ fn mutate_slice(slice: &mut [u8]) {
   }
 }
 
-fn inital_population(len: usize) -> Vec<(Vec<u8>, Vec<u8>)> {
+fn inital_population(len: usize) -> Vec<InputPair> {
   let mut population = Vec::with_capacity(POPULATION_SIZE);
   for _ in 0..POPULATION_SIZE {
     population.push(random_individual(len));
@@ -148,11 +162,11 @@ fn inital_population(len: usize) -> Vec<(Vec<u8>, Vec<u8>)> {
   population
 }
 
-fn random_individual(len: usize) -> (Vec<u8>, Vec<u8>) {
-  (
-    (0..len).map(|_| rand::random::<u8>()).collect(),
-    (0..len).map(|_| rand::random::<u8>()).collect(),
-  )
+fn random_individual(len: usize) -> InputPair {
+  InputPair {
+    first: (0..len).map(|_| rand::random::<u8>()).collect(),
+    second: (0..len).map(|_| rand::random::<u8>()).collect(),
+  }
 }
 
 #[cfg(test)]
@@ -187,7 +201,7 @@ mod tests {
     // This will be sorted
     let population = optimizer.population();
 
-    assert_eq!(population[0].0, target);
-    assert_eq!(population[0].1, target);
+    assert_eq!(population[0].first, target);
+    assert_eq!(population[0].second, target);
   }
 }

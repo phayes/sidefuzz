@@ -3,6 +3,18 @@ mod optimizer;
 mod stats;
 use optimizer::Optimizer;
 
+#[derive(Debug, Clone)]
+pub struct InputPair {
+  pub first: Vec<u8>,
+  pub second: Vec<u8>
+}
+
+#[derive(Debug, Clone)]
+pub struct ScoredInputPair {
+  pub score: f64,
+  pub pair: InputPair
+}
+
 pub struct SideFuzz<T>
 where
   T: Fn(&[u8]) -> Result<(), ()>,
@@ -48,11 +60,12 @@ where
       for _ in 0..1000 {
         time_optimizer.step();
       }
-      let population = time_optimizer.population();
+      let population = time_optimizer.scored_population();
       println!(
-        "{} {}",
-        hex::encode(&population[0].0),
-        hex::encode(&population[0].1)
+        "{} {} {}",
+        &population[0].score,
+        hex::encode(&population[0].pair.first),
+        hex::encode(&population[0].pair.second)
       );
     }
   }
