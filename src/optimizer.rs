@@ -5,7 +5,7 @@ use rand::{seq::SliceRandom, Rng};
 // TODO: Find optimal values for these consts
 
 // Population size
-const POPULATION_SIZE: usize = 100;
+const POPULATION_SIZE: usize = 500;
 
 // Mutation rate
 const MUTATION_RATE: f64 = 0.05;
