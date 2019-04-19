@@ -2,6 +2,8 @@ mod cpucycles;
 mod dudect;
 mod optimizer;
 use optimizer::Optimizer;
+use std::mem::forget;
+use std::ptr;
 
 #[derive(Debug, Clone, Default)]
 pub struct InputPair {
@@ -34,7 +36,6 @@ where
     }
   }
 
-  #[no_mangle]
   fn num_executions(&self) -> u64 {
     // Find a good input
     let mut input: Vec<u8>;
@@ -50,21 +51,20 @@ where
     loop {
       let timer = cpu_time::ProcessTime::now();
       for _ in 0..num_executions {
-        let _ = (self.function)(&input);
+        let _ = black_box((self.function)(&input));
       }
-      let time = timer.elapsed().as_nanos();
-      if time > 20_000 {
-        // Target of 20 microseconds per run
+      // Target of 10 at least microseconds per run
+      let time = timer.elapsed().as_micros();
+      if time > 10 {
         break;
       } else {
-        num_executions = num_executions * 10;
+        num_executions = num_executions * 2;
       }
     }
 
     num_executions
   }
 
-  #[no_mangle]
   pub fn run(&self) {
     // Pin to a single core
     // TODO: for multi-core checking, pin to different cores
@@ -72,7 +72,7 @@ where
     let core_ids = core_affinity::get_core_ids().unwrap();
     core_affinity::set_for_current(core_ids[0]);
 
-    // Sample execution time so that we have at least 20 microseconds per run
+    // Sample execution time so that we have at least 10 microseconds per run
     println!("Determining number of executions per measurement");
     let num_executions = self.num_executions();
     println!("{} executions per measurement", num_executions);
@@ -82,7 +82,7 @@ where
 
       let cycles_marker = cpucycles::cpucycles();
       for _ in 0..num_executions {
-        result = (self.function)(first);
+        result = black_box((self.function)(first));
       }
       let first_cycles = cpucycles::cpucycles() - cycles_marker;
       if result.is_err() {
@@ -91,7 +91,7 @@ where
 
       let cycles_marker = cpucycles::cpucycles();
       for _ in 0..num_executions {
-        result = (self.function)(second);
+        result = black_box((self.function)(second));
       }
       let second_cycles = cpucycles::cpucycles() - cycles_marker;
       if result.is_err() {
@@ -135,7 +135,6 @@ where
         best = population[0].clone();
         average = new_average;
       } else {
-        println!("Found candidate input pair");
         println!(
           "Checking {} {}",
           hex::encode(&best.pair.first),
@@ -143,7 +142,7 @@ where
         );
         let dudect = dudect::DudeCT::new(&best.pair.first, &best.pair.second, |input: &[u8]| {
           for _ in 0..num_executions {
-            let _ = &(self.function)(input);
+            let _ = black_box(&(self.function)(input));
           }
           Ok(())
         });
@@ -157,5 +156,23 @@ where
         }
       }
     }
+  }
+}
+
+// FIXME: We don't have black_box in stable rust
+
+/// NOTE: We don't have a proper black box in stable Rust. This is
+/// a workaround implementation, that may have a too big performance overhead,
+/// depending on operation, or it may fail to properly avoid having code
+/// optimized out. It is good enough that it is used by default.
+///
+/// A function that is opaque to the optimizer, to allow benchmarks to
+/// pretend to use outputs to assist in avoiding dead-code
+/// elimination.
+pub fn black_box<T>(dummy: T) -> T {
+  unsafe {
+    let ret = ptr::read_volatile(&dummy);
+    forget(dummy);
+    ret
   }
 }

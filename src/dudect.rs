@@ -40,11 +40,18 @@ where
 
       t = calculate_t(&first_samples, &second_samples);
 
-      println!("samples: {}, t-value: {}", first_samples.len(), t);
+      let p = p_value_from_t_value(t);
+      println!(
+        "samples: {}, t-value: {}, confidence: {}%",
+        first_samples.len(),
+        t,
+        (1.0 - p) * 100.0
+      );
 
       if t > 3.2905 {
         println!(
-          "Found timing difference with 99.99% confidence.\n{}\n{}",
+          "Found timing difference between these two inputs with {}% confidence:\ninput 1: {}\ninput 2: {}",
+          (1.0 - p) * 100.0,
           hex::encode(self.first),
           hex::encode(self.second)
         );
@@ -85,8 +92,13 @@ fn degrees_freedom(first: &[f64], second: &[f64]) -> f64 {
 fn p_value_from_t_value(t: f64) -> f64 {
   // TODO: use formula instead of table.
 
+  if t <= 0.0 {
+    return 1.0; // 0% confidence.
+  }
+
   // assume infinite degrees of freedom
   let t_table = vec![
+    (10.000, 0.0), // 100% confidence
     (3.2905, 0.0005),
     (2.57583, 0.005),
     (2.32635, 0.01),
@@ -95,7 +107,7 @@ fn p_value_from_t_value(t: f64) -> f64 {
     (1.281552, 0.10),
     (0.674490, 0.25),
     (0.253347, 0.4),
-    (0.0, 0.0),
+    (0.0, 1.0),
   ];
 
   for (t_value, p_value) in t_table {

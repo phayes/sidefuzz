@@ -5,7 +5,7 @@ use rand::{seq::SliceRandom, Rng};
 // TODO: Find optimal values for these consts
 
 // Population size
-const POPULATION_SIZE: usize = 500;
+const POPULATION_SIZE: usize = 200;
 
 // Mutation rate
 const MUTATION_RATE: f64 = 0.05;
@@ -67,6 +67,17 @@ where
     scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
 
     scored
+  }
+
+  pub fn average_score(&self) -> f64 {
+    let scored = self.scored_population();
+      let sum: f64 = scored.iter().fold(0.0, |mut sum, val| {
+        sum += val.score;
+        sum
+      });
+      let average = sum / (scored.len() as f64);
+
+      average
   }
 
   pub fn step(&mut self) {
