@@ -57,7 +57,7 @@ where
         );
         return Ok(t);
       }
-      if first_samples.len() > 1_000_000 && t < 0.253347 {
+      if first_samples.len() > 1_000_000 && t < 0.674 {
         println!("Giving up on these inputs...");
         return Err(());
       }
@@ -79,14 +79,7 @@ fn calculate_t(first: &[f64], second: &[f64]) -> f64 {
   let t = (first_mean - second_mean)
     / ((first_variance / sample_size) + (second_variance / sample_size)).sqrt();
 
-  t
-}
-
-fn degrees_freedom(first: &[f64], second: &[f64]) -> f64 {
-  debug_assert!(first.len() == second.len());
-  debug_assert!(first.len() >= 2);
-
-  (first.len() - 1) as f64 + (second.len() - 1) as f64
+  t.abs()
 }
 
 fn p_value_from_t_value(t: f64) -> f64 {
@@ -96,18 +89,22 @@ fn p_value_from_t_value(t: f64) -> f64 {
     return 1.0; // 0% confidence.
   }
 
-  // assume infinite degrees of freedom
+  // Assume infinite degrees of freedom
+  // Two tailed t test
   let t_table = vec![
     (10.000, 0.0), // 100% confidence
-    (3.2905, 0.0005),
-    (2.57583, 0.005),
-    (2.32635, 0.01),
-    (1.95996, 0.025),
-    (1.644854, 0.05),
-    (1.281552, 0.10),
-    (0.674490, 0.25),
-    (0.253347, 0.4),
-    (0.0, 1.0),
+    (3.291, 0.001),
+    (3.090, 0.002),
+    (2.807, 0.005),
+    (2.576, 0.01),
+    (2.326, 0.02),
+    (1.960, 0.05),
+    (1.645, 0.1),
+    (1.282, 0.2),
+    (1.036, 0.3),
+    (0.842, 0.4),
+    (0.674, 0.5),
+    (0.0, 1.0), // 0% confidence
   ];
 
   for (t_value, p_value) in t_table {
