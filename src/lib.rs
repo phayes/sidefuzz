@@ -1,6 +1,8 @@
-mod cpucycles;
-mod dudect;
-mod optimizer;
+pub mod cpucycles;
+pub mod dudect;
+pub mod optimizer;
+
+use dudect::{DudeCT, DudeResult};
 use optimizer::Optimizer;
 use std::mem::forget;
 use std::ptr;
@@ -140,19 +142,55 @@ where
           hex::encode(&best.pair.first),
           hex::encode(&best.pair.second)
         );
-        let dudect = dudect::DudeCT::new(&best.pair.first, &best.pair.second, |input: &[u8]| {
-          for _ in 0..num_executions {
-            let _ = black_box(&(self.function)(input));
+
+        // Construct DudeCT
+        // Return success on t = 3.2905 (99.999 confidence)
+        // Give up on t < 0.674 (50% confidence) when over 1 million samples.
+        let mut dudect = DudeCT::new(
+          3.2905,    // Success t-value
+          0.674,     // Give up t-value
+          1_000_000, // Give up min samples
+          &best.pair.first,
+          &best.pair.second,
+          |input: &[u8]| {
+            for _ in 0..num_executions {
+              let _ = black_box(&(self.function)(input));
+            }
+            Ok(())
+          },
+        );
+
+        loop {
+          let (t, result) = dudect.sample(100_000);
+          let p = p_value_from_t_value(t);
+
+          println!(
+            "samples: {}, t-value: {}, confidence: {}%",
+            dudect.len(),
+            t,
+            (1.0 - p) * 100.0
+          );
+
+          match result {
+            DudeResult::Ok => {
+              println!(
+                "Found timing difference between these two inputs with {}% confidence:\ninput 1: {}\ninput 2: {}",
+                (1.0 - p) * 100.0,
+                hex::encode(&best.pair.first),
+                hex::encode(&best.pair.second)
+              );
+              std::process::exit(0);
+            }
+            DudeResult::Err => {
+              best = ScoredInputPair::default();
+              average = 0.0;
+              println!("Giving up on these inputs. Continuing to elolve candidate inputs.");
+              break;
+            }
+            DudeResult::Progress => {
+              continue;
+            }
           }
-          Ok(())
-        });
-        let result = dudect.run();
-        if result.is_ok() {
-          break;
-        } else {
-          best = ScoredInputPair::default();
-          average = 0.0;
-          println!("Continuing to evolve candidate input pairs");
         }
       }
     }
@@ -169,10 +207,44 @@ where
 /// A function that is opaque to the optimizer, to allow benchmarks to
 /// pretend to use outputs to assist in avoiding dead-code
 /// elimination.
-pub fn black_box<T>(dummy: T) -> T {
+pub fn black_box<D>(dummy: D) -> D {
   unsafe {
     let ret = ptr::read_volatile(&dummy);
     forget(dummy);
     ret
   }
+}
+
+fn p_value_from_t_value(t: f64) -> f64 {
+  // TODO: use formula instead of table.
+
+  if t <= 0.0 {
+    return 1.0; // 0% confidence.
+  }
+
+  // Assume infinite degrees of freedom
+  // Two tailed t test
+  let t_table = vec![
+    (10.000, 0.0), // 100% confidence
+    (3.291, 0.001),
+    (3.090, 0.002),
+    (2.807, 0.005),
+    (2.576, 0.01),
+    (2.326, 0.02),
+    (1.960, 0.05),
+    (1.645, 0.1),
+    (1.282, 0.2),
+    (1.036, 0.3),
+    (0.842, 0.4),
+    (0.674, 0.5),
+    (0.0, 1.0), // 0% confidence
+  ];
+
+  for (t_value, p_value) in t_table {
+    if t > t_value {
+      return p_value;
+    }
+  }
+
+  panic!("Invalid t value");
 }
