@@ -48,6 +48,7 @@ where
         (1.0 - p) * 100.0
       );
 
+      // Return results when we get to 99.999% confidence.
       if t > 3.2905 {
         println!(
           "Found timing difference between these two inputs with {}% confidence:\ninput 1: {}\ninput 2: {}",
@@ -57,6 +58,7 @@ where
         );
         return Ok(t);
       }
+      // If we have over a million samples, and still have less than 50% confidence, give up.
       if first_samples.len() > 1_000_000 && t < 0.674 {
         println!("Giving up on these inputs...");
         return Err(());
