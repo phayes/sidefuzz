@@ -199,14 +199,14 @@ where
 
 // FIXME: We don't have black_box in stable rust
 
-/// NOTE: We don't have a proper black box in stable Rust. This is
-/// a workaround implementation, that may have a too big performance overhead,
-/// depending on operation, or it may fail to properly avoid having code
-/// optimized out. It is good enough that it is used by default.
-///
 /// A function that is opaque to the optimizer, to allow benchmarks to
 /// pretend to use outputs to assist in avoiding dead-code
 /// elimination.
+///
+/// NOTE: We don't have a proper black box in stable Rust. This is
+/// a workaround implementation, that may have a too big performance overhead,
+/// depending on operation, or it may fail to properly avoid having code
+/// optimized out. It is good enough that it is used.
 pub fn black_box<D>(dummy: D) -> D {
   unsafe {
     let ret = ptr::read_volatile(&dummy);
