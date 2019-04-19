@@ -1,3 +1,4 @@
+use rolling_stats::Stats;
 use statrs::statistics::Mean;
 use statrs::statistics::Variance;
 
@@ -17,8 +18,8 @@ where
     first: &'a [u8],
     second: &'a [u8],
     function: T,
-    first_samples: Vec<f64>,
-    second_samples: Vec<f64>,
+    first_stats: Stats<f64>,
+    second_stats: Stats<f64>,
 }
 
 impl<'a, T> DudeCT<'a, T>
@@ -40,34 +41,34 @@ where
             first: first,
             second: second,
             function: function,
-            first_samples: Vec::new(),
-            second_samples: Vec::new(),
+            first_stats: Stats::new(),
+            second_stats: Stats::new(),
         }
     }
 
     pub fn len(&self) -> usize {
-        self.first_samples.len()
+        self.first_stats.count
     }
 
     pub fn sample(&mut self, num_samples: u64) -> (f64, DudeResult) {
         for _ in 0..num_samples {
             let timer = cpu_time::ProcessTime::now();
             (self.function)(&self.first).unwrap();
-            self.first_samples.push(timer.elapsed().as_nanos() as f64);
+            self.first_stats.update(timer.elapsed().as_nanos() as f64);
 
             let timer = cpu_time::ProcessTime::now();
             (self.function)(&self.second).unwrap();
-            self.second_samples.push(timer.elapsed().as_nanos() as f64);
+            self.second_stats.update(timer.elapsed().as_nanos() as f64);
         }
 
-        let t = calculate_t(&self.first_samples, &self.second_samples);
+        let t = calculate_t(&self.first_stats, &self.first_stats);
 
         // Return results when t value is above threshold
         if t >= self.t_threshold {
             return (t, DudeResult::Ok);
         }
         // Check if we should give up
-        else if self.first_samples.len() > self.fail_min_samples && t <= self.t_fail {
+        else if self.first_stats.count > self.fail_min_samples && t <= self.t_fail {
             return (t, DudeResult::Err);
         } else {
             // Neither success nor failure, keep going.
@@ -76,16 +77,19 @@ where
     }
 }
 
-fn calculate_t(first: &[f64], second: &[f64]) -> f64 {
-    debug_assert!(first.len() == second.len());
+fn calculate_t(first: &Stats<f64>, second: &Stats<f64>) -> f64 {
+    debug_assert!(first.count == second.count);
 
-    let first_mean = first.mean();
-    let second_mean = second.mean();
+    let first_mean = first.mean;
+    let second_mean = second.mean;
 
-    let first_variance = first.variance();
-    let second_variance = second.variance();
+    let first_std_dev = first.std_dev;
+    let second_std_dev = first.std_dev;
 
-    let sample_size = first.len() as f64;
+    let first_variance = first_std_dev * first_std_dev;
+    let second_variance = second_std_dev * second_std_dev;
+
+    let sample_size = first.count as f64;
 
     let t = (first_mean - second_mean)
         / ((first_variance / sample_size) + (second_variance / sample_size)).sqrt();
