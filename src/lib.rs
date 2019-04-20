@@ -1,3 +1,6 @@
+#[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
+compile_error!(r#"sidefuzz currently only supports x86 and x86_64"#);
+
 pub mod cpucycles;
 pub mod dudect;
 pub mod optimizer;
