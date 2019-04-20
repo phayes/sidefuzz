@@ -104,8 +104,8 @@ where
         let mut next_gen: Vec<InputPair> = Vec::with_capacity(self.population.len());
 
         // Clone the top contenders
-        for n in 0..num_clone {
-            next_gen.push(scored[n].pair.clone());
+        for score in scored.iter().take(num_clone) {
+            next_gen.push(score.pair.clone());
         }
 
         // Breed and mutate the rest
