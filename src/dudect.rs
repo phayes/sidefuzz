@@ -1,6 +1,4 @@
 use rolling_stats::Stats;
-use statrs::statistics::Mean;
-use statrs::statistics::Variance;
 
 pub enum DudeResult {
     Ok,       // Success
@@ -35,12 +33,12 @@ where
         function: T,
     ) -> Self {
         DudeCT {
-            t_threshold: t_threshold,
-            t_fail: t_fail,
-            fail_min_samples: fail_min_samples,
-            first: first,
-            second: second,
-            function: function,
+            t_threshold,
+            t_fail,
+            fail_min_samples,
+            first,
+            second,
+            function,
             first_stats: Stats::new(),
             second_stats: Stats::new(),
         }
@@ -65,14 +63,14 @@ where
 
         // Return results when t value is above threshold
         if t >= self.t_threshold {
-            return (t, DudeResult::Ok);
+            (t, DudeResult::Ok)
         }
         // Check if we should give up
         else if self.first_stats.count > self.fail_min_samples && t <= self.t_fail {
-            return (t, DudeResult::Err);
+            (t, DudeResult::Err)
         } else {
             // Neither success nor failure, keep going.
-            return (t, DudeResult::Progress);
+            (t, DudeResult::Progress)
         }
     }
 }
