@@ -55,11 +55,10 @@ where
         let mut scored: Vec<ScoredInputPair> = Vec::with_capacity(self.population.len());
 
         for individual in self.population.iter() {
-            let individual = individual.clone();
             let fitness = (self.fitness)(&individual.first, &individual.second);
             scored.push(ScoredInputPair {
                 score: fitness,
-                pair: individual,
+                pair: individual.clone(),
             });
         }
 
@@ -81,18 +80,7 @@ where
 
     pub fn step(&mut self) {
         // Get fitness of all individuals
-        let mut scored: Vec<ScoredInputPair> = Vec::with_capacity(self.population.len());
-
-        for individual in self.population.drain(..) {
-            let fitness = (self.fitness)(&individual.first, &individual.second);
-            scored.push(ScoredInputPair {
-                score: fitness,
-                pair: individual,
-            });
-        }
-
-        // Sort most fit to least fit
-        scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        let scored = self.scored_population();
 
         // Calculate number to clone and number to breed
         let num_clone: usize = (POPULATION_SIZE as f64 * CLONE_RATIO) as usize;
