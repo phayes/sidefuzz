@@ -100,9 +100,9 @@ where
         return 0.0;
       }
 
-      let ratio = first_cycles as f64 / second_cycles as f64;
+      let ratio: f64 = first_cycles as f64 / second_cycles as f64;
 
-      if ratio == std::f64::NAN {
+      if ratio.is_nan() {
         return 0.0;
       }
 
