@@ -65,14 +65,14 @@ where
 
         // Return results when t value is above threshold
         if t >= self.t_threshold {
-            return (t, DudeResult::Ok);
+            (t, DudeResult::Ok)
         }
         // Check if we should give up
         else if self.first_stats.count > self.fail_min_samples && t <= self.t_fail {
-            return (t, DudeResult::Err);
+            (t, DudeResult::Err)
         } else {
             // Neither success nor failure, keep going.
-            return (t, DudeResult::Progress);
+            (t, DudeResult::Progress)
         }
     }
 }
