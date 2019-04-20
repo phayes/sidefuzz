@@ -1,6 +1,4 @@
 use rolling_stats::Stats;
-use statrs::statistics::Mean;
-use statrs::statistics::Variance;
 
 pub enum DudeResult {
     Ok,       // Success
