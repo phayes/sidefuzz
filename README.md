@@ -4,7 +4,7 @@ SideFuzz is an adaptive fuzzer that uses an genetic-algorithim optimizer in comb
 
 ### How it works
 
-**Phase 1.** Uses a genetic-algorithim optimizer that tries to maximumize the running time between two different inputs. It will continue optimizing until subsequent generations of input-pairs no longer produce any meaningful differences in running time. This means that it will optmize until it finds finds a "local maxima" in the fitness of input pairs.
+**Phase 1.** Uses a genetic-algorithim optimizer that tries to maximize the running time between two different inputs. It will continue optimizing until subsequent generations of input-pairs no longer produce any meaningful differences in running time. This means that it will optmize until it finds finds a "local maxima" in the fitness of input pairs.
 
 **Phase 2.** Once a local optima is found, the leading input-pairs are sampled until either:
 
