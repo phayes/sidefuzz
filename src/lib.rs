@@ -184,7 +184,7 @@ where
             DudeResult::Err => {
               best = ScoredInputPair::default();
               average = 0.0;
-              println!("Giving up on these inputs. Continuing to elolve candidate inputs.");
+              println!("Giving up on these inputs. Continuing to evolve candidate inputs.");
               break;
             }
             DudeResult::Progress => {

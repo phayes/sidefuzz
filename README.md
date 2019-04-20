@@ -1,4 +1,4 @@
-# SideFuzz: Fuzzing to find timing side-channel vulnerabilities in cryptography
+# SideFuzz: Fuzzing for timing side-channel vulnerabilities
 
 SideFuzz is an adaptive fuzzer that uses an genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography.
 
