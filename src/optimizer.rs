@@ -75,9 +75,8 @@ where
             sum += val.score;
             sum
         });
-        let average = sum / (scored.len() as f64);
-
-        average
+        
+        sum / (scored.len() as f64)
     }
 
     pub fn step(&mut self) {

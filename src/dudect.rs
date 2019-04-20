@@ -33,12 +33,12 @@ where
         function: T,
     ) -> Self {
         DudeCT {
-            t_threshold: t_threshold,
-            t_fail: t_fail,
-            fail_min_samples: fail_min_samples,
-            first: first,
-            second: second,
-            function: function,
+            t_threshold,
+            t_fail,
+            fail_min_samples,
+            first,
+            second,
+            function,
             first_stats: Stats::new(),
             second_stats: Stats::new(),
         }

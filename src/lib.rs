@@ -33,8 +33,8 @@ where
 {
   pub fn new(len: usize, function: T) -> Self {
     SideFuzz {
-      len: len,
-      function: function,
+      len,
+      function,
     }
   }
 
