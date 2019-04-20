@@ -12,7 +12,7 @@ SideFuzz is an adaptive fuzzer that uses an genetic-algorithim optimizer in comb
 
 - The t-statistic stays low, even after significant sampling. In this case the candidate input pairs are rejected and SideFuzz returns to phase 1, resuming the genetic-algorithim optimizer to find another local optmia.
 
-The current version uses elapsed CPU cycles as it's measurement. Future verions will include PAPI support behind a feature flag.
+The current version uses elapsed CPU cycles as it's measurement. Future versions will include PAPI support behind a feature flag.
 
 ### Furthur Reading
 
