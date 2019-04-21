@@ -24,3 +24,11 @@ The current version uses elapsed CPU cycles as it's measurement. Future versions
    https://arxiv.org/abs/1811.07005
 
 2. "Dude, is my code constant time?", Reparaz et al. https://eprint.iacr.org/2016/1123.pdf
+
+
+
+## Related Tools
+
+1. `dudect-bencher`. An implementation of the DudeCT constant-time function tester. In comparison to SideFuzz, this tool more closely adheres to the original dudect design. https://crates.io/crates/dudect-bencher
+
+2. `ctgrind`. Tool for checking that functions are constant time using Valgrind. https://github.com/RustCrypto/utils/tree/master/ctgrind
