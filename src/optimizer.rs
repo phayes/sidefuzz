@@ -11,7 +11,7 @@ const POPULATION_SIZE: usize = 200;
 const MUTATION_RATE: f64 = 0.05;
 
 // Ratio of "large mutations" (random u8 replacement) vs "small mutations" u8 increment / decrement.
-const LARGE_MUTATION_RATIO: f64 = 0.25;
+const LARGE_MUTATION_RATIO: f64 = 0.10;
 
 // Directly clone this ratio of top performers
 const CLONE_RATIO: f64 = 0.10;
@@ -74,7 +74,7 @@ where
             sum += val.score;
             sum
         });
-        
+
         sum / (scored.len() as f64)
     }
 
@@ -191,7 +191,7 @@ mod tests {
             score
         });
 
-        // Run one thousand generations
+        // Run one hundred generations
         for _ in 0..1000 {
             optimizer.step();
         }

@@ -24,7 +24,7 @@ pub struct ScoredInputPair {
 
 pub struct SideFuzz<T>
 where
-  T: Fn(&[u8]) -> Result<(), ()>,
+  T: Fn(&[u8]),
 {
   len: usize,
   function: T,
@@ -32,7 +32,7 @@ where
 
 impl<T> SideFuzz<T>
 where
-  T: Fn(&[u8]) -> Result<(), ()>,
+  T: Fn(&[u8]),
 {
   pub fn new(len: usize, function: T) -> Self {
     SideFuzz { len, function }
@@ -40,14 +40,10 @@ where
 
   fn num_executions(&self) -> u64 {
     // Find a good input
+    // TODO: Check input when check function available
     let mut input: Vec<u8>;
-    loop {
-      input = (0..self.len).map(|_| rand::random::<u8>()).collect();
-      let result = (self.function)(&input);
-      if result.is_ok() {
-        break;
-      }
-    }
+    input = (0..self.len).map(|_| rand::random::<u8>()).collect();
+    black_box((self.function)(&input));
 
     let mut num_executions = 1;
     loop {
@@ -55,9 +51,9 @@ where
       for _ in 0..num_executions {
         let _ = black_box((self.function)(&input));
       }
-      // Target of 10 at least microseconds per run
+      // Target of 20 at least microseconds per run
       let time = timer.elapsed().as_micros();
-      if time > 10 {
+      if time > 20 {
         break;
       } else {
         num_executions = num_executions * 2;
@@ -80,25 +76,17 @@ where
     println!("{} executions per measurement", num_executions);
 
     let mut time_optimizer = Optimizer::new(self.len, |first: &[u8], second: &[u8]| {
-      let mut result: Result<(), ()> = Ok(());
-
       let cycles_marker = cpucycles::cpucycles();
       for _ in 0..num_executions {
-        result = black_box((self.function)(first));
+        black_box((self.function)(first));
       }
       let first_cycles = cpucycles::cpucycles() - cycles_marker;
-      if result.is_err() {
-        return 0.0;
-      }
 
       let cycles_marker = cpucycles::cpucycles();
       for _ in 0..num_executions {
-        result = black_box((self.function)(second));
+        black_box((self.function)(second));
       }
       let second_cycles = cpucycles::cpucycles() - cycles_marker;
-      if result.is_err() {
-        return 0.0;
-      }
 
       let ratio: f64 = first_cycles as f64 / second_cycles as f64;
 
@@ -154,9 +142,8 @@ where
           &best.pair.second,
           |input: &[u8]| {
             for _ in 0..num_executions {
-              let _ = black_box(&(self.function)(input));
+              black_box(&(self.function)(input));
             }
-            Ok(())
           },
         );
 
@@ -184,7 +171,9 @@ where
             DudeResult::Err => {
               best = ScoredInputPair::default();
               average = 0.0;
-              println!("Giving up on these inputs. Continuing to evolve candidate inputs.");
+              println!(
+                "Candidate input pair rejected: t-statistic small after many samples. Continuing to evolve candidate inputs."
+              );
               break;
             }
             DudeResult::Progress => {
@@ -207,6 +196,7 @@ where
 /// a workaround implementation, that may have a too big performance overhead,
 /// depending on operation, or it may fail to properly avoid having code
 /// optimized out. It is good enough that it is used.
+#[inline(never)]
 pub fn black_box<D>(dummy: D) -> D {
   unsafe {
     let ret = ptr::read_volatile(&dummy);

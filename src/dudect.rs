@@ -1,3 +1,5 @@
+use crate::black_box;
+use crate::cpucycles;
 use rolling_stats::Stats;
 
 #[derive(Eq, PartialEq, Debug)]
@@ -9,7 +11,7 @@ pub enum DudeResult {
 
 pub struct DudeCT<'a, T>
 where
-    T: Fn(&[u8]) -> Result<(), ()>,
+    T: Fn(&[u8]),
 {
     t_threshold: f64,
     t_fail: f64,
@@ -23,7 +25,7 @@ where
 
 impl<'a, T> DudeCT<'a, T>
 where
-    T: Fn(&[u8]) -> Result<(), ()>,
+    T: Fn(&[u8]),
 {
     pub fn new(
         t_threshold: f64,
@@ -51,13 +53,20 @@ where
 
     pub fn sample(&mut self, num_samples: u64) -> (f64, DudeResult) {
         for _ in 0..num_samples {
-            let timer = cpu_time::ProcessTime::now();
-            (self.function)(&self.first).unwrap();
-            self.first_stats.update(timer.elapsed().as_nanos() as f64);
+            {
+                let cycles_marker = cpucycles::cpucycles();
 
-            let timer = cpu_time::ProcessTime::now();
-            (self.function)(&self.second).unwrap();
-            self.second_stats.update(timer.elapsed().as_nanos() as f64);
+                black_box((self.function)(&self.first));
+                let num_cycles = cpucycles::cpucycles() - cycles_marker;
+                self.first_stats.update(num_cycles as f64);
+            }
+
+            {
+                let cycles_marker = cpucycles::cpucycles();
+                black_box((self.function)(&self.second));
+                let num_cycles = cpucycles::cpucycles() - cycles_marker;
+                self.second_stats.update(num_cycles as f64);
+            }
         }
 
         let t = calculate_t(&self.first_stats, &self.second_stats);
@@ -77,8 +86,6 @@ where
 }
 
 fn calculate_t(first: &Stats<f64>, second: &Stats<f64>) -> f64 {
-    debug_assert!(first.count == second.count);
-
     let first_mean = first.mean;
     let second_mean = second.mean;
 
@@ -88,10 +95,11 @@ fn calculate_t(first: &Stats<f64>, second: &Stats<f64>) -> f64 {
     let first_variance = first_std_dev * first_std_dev;
     let second_variance = second_std_dev * second_std_dev;
 
-    let sample_size = first.count as f64;
+    let first_sample_size = first.count as f64;
+    let second_sample_size = second.count as f64;
 
     let t = (first_mean - second_mean)
-        / ((first_variance / sample_size) + (second_variance / sample_size)).sqrt();
+        / ((first_variance / first_sample_size) + (second_variance / second_sample_size)).sqrt();
 
     t.abs()
 }
@@ -129,8 +137,7 @@ mod tests {
             &one,
             &ff,
             |input: &[u8]| {
-                let _ = black_box(fibonacci(input[0]));
-                Ok(())
+                black_box(fibonacci(input[0]));
             },
         );
 
