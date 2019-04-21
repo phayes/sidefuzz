@@ -25,7 +25,9 @@ The current version uses elapsed CPU cycles as it's measurement. Future versions
 
 2. "Dude, is my code constant time?", Reparaz et al. https://eprint.iacr.org/2016/1123.pdf
 
-3. "Rust, dudect and constant-time crypto in debug mode", brycx. https://brycx.github.io/2019/04/21/rust-dudect-constant-time-crypto.html
+3. "Rust, dudect and constant-time crypto in debug mode", brycx. 
+
+    https://brycx.github.io/2019/04/21/rust-dudect-constant-time-crypto.html
 
 
 ### Related Tools
