@@ -1,5 +1,6 @@
 use rolling_stats::Stats;
 
+#[derive(Eq, PartialEq, Debug)]
 pub enum DudeResult {
     Ok,       // Success
     Err,      // Failure
@@ -59,7 +60,7 @@ where
             self.second_stats.update(timer.elapsed().as_nanos() as f64);
         }
 
-        let t = calculate_t(&self.first_stats, &self.first_stats);
+        let t = calculate_t(&self.first_stats, &self.second_stats);
 
         // Return results when t value is above threshold
         if t >= self.t_threshold {
@@ -93,4 +94,47 @@ fn calculate_t(first: &Stats<f64>, second: &Stats<f64>) -> f64 {
         / ((first_variance / sample_size) + (second_variance / sample_size)).sqrt();
 
     t.abs()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn dudect_test() {
+        pub fn fibonacci(n: u8) -> f64 {
+            if n == 0 {
+                panic!("zero is not a right argument to fibonacci()!");
+            } else if n == 1 {
+                return 1.0;
+            }
+
+            let mut sum = 0.0;
+            let mut last = 0.0;
+            let mut curr = 1.0;
+            for _i in 1..n {
+                sum = last + curr;
+                last = curr;
+                curr = sum;
+            }
+            sum
+        }
+
+        let one = vec![1u8];
+        let ff = vec![255u8];
+        let mut dudect = DudeCT::new(
+            3.2905,    // Success t-value
+            0.674,     // Give up t-value
+            1_000_000, // Give up min samples
+            &one,
+            &ff,
+            |input: &[u8]| {
+                let _ = black_box(fibonacci(input[0]));
+                Ok(())
+            },
+        );
+
+        let (_t, result) = dudect.sample(100_000);
+        assert_eq!(result, DudeResult::Ok);
+    }
 }

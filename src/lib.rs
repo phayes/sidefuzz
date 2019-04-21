@@ -35,10 +35,7 @@ where
   T: Fn(&[u8]) -> Result<(), ()>,
 {
   pub fn new(len: usize, function: T) -> Self {
-    SideFuzz {
-      len,
-      function,
-    }
+    SideFuzz { len, function }
   }
 
   fn num_executions(&self) -> u64 {
