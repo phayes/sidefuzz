@@ -4,7 +4,7 @@ SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combi
 
 Fuzzing Targets can be found here: https://github.com/phayes/sidefuzz-targets
 
-**SideFuzz is a work in progress. There could be bugs that may result in inaccurate results.**
+**SideFuzz is a work in progress. There could be bugs that may result in inaccurate results. For example, see https://github.com/phayes/sidefuzz/issues/8**
 
 ### How it works
 
