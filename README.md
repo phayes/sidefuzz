@@ -54,7 +54,7 @@ fn main() {
 
 ## Known Issues
 
-The fuzzer tends to produce false-positives with `opt-level = 3`. I have yet to determine if this is due to a problem in the fuzzer, or if rust is acutally unable to produce good constant-time code when `opt-level = 3` is set.  In order to avoid this, add the following to your Cargo.toml in your target project:
+The fuzzer tends to produce false-positives with `opt-level = 3`. I have yet to determine if this is due to a problem in the fuzzer, or if rust is acutally unable to produce good constant-time code with `opt-level = 3`.  In order to avoid this, add the following to your Cargo.toml in your target project:
 
 ```toml
 [profile.release]
