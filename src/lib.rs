@@ -140,7 +140,7 @@ where
           1_000_000, // Give up min samples
           &best.pair.first,
           &best.pair.second,
-          |input: &[u8]| {
+          #[inline(never)] |input: &[u8]| {
             for _ in 0..num_executions {
               black_box(&(self.function)(input));
             }
