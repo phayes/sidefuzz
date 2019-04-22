@@ -53,15 +53,13 @@ where
 
     pub fn sample(&mut self, num_samples: u64) -> (f64, DudeResult) {
         for _ in 0..num_samples {
-            {
+            // randomly select which side to execute
+            if rand::random() {
                 let cycles_marker = cpucycles::cpucycles();
-
                 black_box((self.function)(&self.first));
                 let num_cycles = cpucycles::cpucycles() - cycles_marker;
                 self.first_stats.update(num_cycles as f64);
-            }
-
-            {
+            } else {
                 let cycles_marker = cpucycles::cpucycles();
                 black_box((self.function)(&self.second));
                 let num_cycles = cpucycles::cpucycles() - cycles_marker;
