@@ -132,10 +132,10 @@ where
         );
 
         // Construct DudeCT
-        // Return success on t = 3.2905 (99.999 confidence)
+        // Return success on t = 4.5 (very high confidence)
         // Give up on t < 0.674 (50% confidence) when over 1 million samples.
         let mut dudect = DudeCT::new(
-          3.2905,    // Success t-value
+          4.5,       // Success t-value
           0.674,     // Give up t-value
           1_000_000, // Give up min samples
           &best.pair.first,
@@ -216,6 +216,7 @@ fn p_value_from_t_value(t: f64) -> f64 {
   // Two tailed t test
   let t_table = vec![
     (10.000, 0.0), // 100% confidence
+    (3.91, 0.0001),
     (3.291, 0.001),
     (3.090, 0.002),
     (2.807, 0.005),
@@ -227,6 +228,7 @@ fn p_value_from_t_value(t: f64) -> f64 {
     (1.036, 0.3),
     (0.842, 0.4),
     (0.674, 0.5),
+    (0.253, 0.6),
     (0.0, 1.0), // 0% confidence
   ];
 
