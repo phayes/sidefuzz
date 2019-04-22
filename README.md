@@ -34,3 +34,31 @@ The current version uses elapsed CPU cycles as it's measurement. Future versions
 1. `dudect-bencher`. An implementation of the DudeCT constant-time function tester. In comparison to SideFuzz, this tool more closely adheres to the original dudect design. https://crates.io/crates/dudect-bencher
 
 2. `ctgrind`. Tool for checking that functions are constant time using Valgrind. https://github.com/RustCrypto/utils/tree/master/ctgrind
+
+
+## Usage
+
+Using the fuzzer is incredibly easy. 
+
+```rust
+fn main() {
+    let input_len = 32; // 32 byte (256 bit) input
+    let fuzzer = sidefuzz::SideFuzz::new(input_len, #[inline(never)]
+    |input: &[u8]| {
+        sidefuzz::black_box(hopefully_constant_fn(input));
+    });
+
+    fuzzer.run();
+}
+```
+
+## Known Issues
+
+The fuzzer tends to produce false-positives with `opt-level = 3`. I have yet to determine if this is due to a problem in the fuzzer, or if rust is acutally unable to produce good constant-time code with `opt-level = 3`.  In order to avoid this, add the following to your Cargo.toml in your target project:
+
+```toml
+[profile.release]
+opt-level = 2
+```
+
+You should then compile with `cargo build --release`.  Do not use debug builds (`cargo build`) for fuzzing since your target may include `assert_debug!` calls that are not constant time.
