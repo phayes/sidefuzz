@@ -48,7 +48,7 @@ where
     }
 
     pub fn len(&self) -> usize {
-        self.first_stats.count
+        self.first_stats.count + self.second_stats.count
     }
 
     pub fn sample(&mut self, num_samples: u64) -> (f64, DudeResult) {
