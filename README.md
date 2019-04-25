@@ -56,6 +56,14 @@ cargo build --release                                             # Always pass 
 sidefuzz 32 ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzz with 32 bytes of input
 ```
 
-## Other Language
+## Other Languages
 
-SideFuzz should work with Go, C, C++ and other langauges that compile to wasm. Formal support is planned in the future.
+SideFuzz works with Go, C, C++ and other langauges that compile to wasm.
+
+The wasm module should provide two exports: 
+
+1. Memory exported to "memory"
+
+2. A function named "sidefuzz" that takes two `i32` arguments. The first argument is a pointer to the start of the input array, the second argument is the length of the input array. 
+
+The `sidefuzz` function will be called repeatedly during the fuzzing process. 
