@@ -8,13 +8,13 @@ Fuzzing Targets can be found here: https://github.com/phayes/sidefuzz-targets
 
 SideFuzz works by counting wasm instructions executed in the [wasmi](https://github.com/paritytech/wasmi) wasm interpreter. 
 
-**Phase 1.** Uses a genetic-algorithim optimizer that tries to maximize the instructions executed between two different inputs. It will continue optimizing until subsequent generations of input-pairs no longer produce any meaningful differences in the number of instructions executed. This means that it will optimize until it finds finds a "local optimum" in the fitness of input pairs.
+**Phase 1.** Uses a genetic-algorithim optimizer that tries to maximize the instructions executed between two different inputs. It will continue optimizing until subsequent generations of input-pairs no longer produce any meaningful differences in the number of instructions executed. This means that it will optimize until it finds finds a local optimum in the fitness of input pairs.
 
 **Phase 2.** Once a local optimum is found, the leading input-pairs are sampled until either:
 
 - A large t-statistic (p = 0.001) is found, indicating that there is a statistically significant difference in running-time between the two inputs. This is indicative of a timing side-channel vulnerability; or
 
-- The t-statistic stays low, even after significant sampling. In this case the candidate input pairs are rejected and SideFuzz returns to phase 1, resuming the genetic-algorithim optimizer to find another local optmia.
+- The t-statistic stays low, even after significant sampling. In this case the candidate input pairs are rejected and SideFuzz returns to phase 1, resuming the genetic-algorithim optimizer to find another local optimum.
 
 ### Furthur Reading
 
