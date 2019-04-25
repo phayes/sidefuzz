@@ -1,6 +1,6 @@
-use crate::black_box;
-use crate::cpucycles;
+use wasmi::{ImportsBuilder, Module, ModuleInstance, NopExternals, RuntimeValue};
 use rolling_stats::Stats;
+use std::convert::TryFrom;
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum DudeResult {
@@ -9,23 +9,19 @@ pub enum DudeResult {
     Progress, // Neither success nor failure, still in progress.
 }
 
-pub struct DudeCT<'a, T>
-where
-    T: Fn(&[u8]),
+pub struct DudeCT<'a>
 {
     t_threshold: f64,
     t_fail: f64,
     fail_min_samples: usize,
     first: &'a [u8],
     second: &'a [u8],
-    function: T,
+    wasm_module: &'a Module,
     first_stats: Stats<f64>,
     second_stats: Stats<f64>,
 }
 
-impl<'a, T> DudeCT<'a, T>
-where
-    T: Fn(&[u8]),
+impl<'a> DudeCT<'a>
 {
     pub fn new(
         t_threshold: f64,
@@ -33,7 +29,7 @@ where
         fail_min_samples: usize,
         first: &'a [u8],
         second: &'a [u8],
-        function: T,
+        wasm_module: &'a Module,
     ) -> Self {
         DudeCT {
             t_threshold,
@@ -41,7 +37,7 @@ where
             fail_min_samples,
             first,
             second,
-            function,
+            wasm_module,
             first_stats: Stats::new(),
             second_stats: Stats::new(),
         }
@@ -52,19 +48,52 @@ where
     }
 
     pub fn sample(&mut self, num_samples: u64) -> (f64, DudeResult) {
+        // Instantiate a module with empty imports and
+        // assert that there is no `start` function.
+        let module_instance = ModuleInstance::new(&self.wasm_module, &ImportsBuilder::default())
+            .expect("failed to instantiate wasm module")
+            .assert_no_start();
+
+    // Get memory instance exported by name 'mem' from the module instance.
+    let internal_mem = module_instance.export_by_name("memory");
+    let internal_mem = internal_mem.expect("Module expected to have 'mem' export");
+    let internal_mem = internal_mem.as_memory().unwrap();
+
         for _ in 0..num_samples {
-            // randomly select which side to execute
-            if rand::random() {
-                let cycles_marker = cpucycles::cpucycles();
-                black_box((self.function)(&self.first));
-                let num_cycles = cpucycles::cpucycles() - cycles_marker;
-                self.first_stats.update(num_cycles as f64);
-            } else {
-                let cycles_marker = cpucycles::cpucycles();
-                black_box((self.function)(&self.second));
-                let num_cycles = cpucycles::cpucycles() - cycles_marker;
-                self.second_stats.update(num_cycles as f64);
-            }
+      // First
+      wasmi::reset_instruction_count();
+      internal_mem.set(0, self.first).unwrap();
+      module_instance
+        .invoke_export(
+          "sidefuzz",
+          &[
+            RuntimeValue::I32(0),
+            RuntimeValue::I32(i32::try_from(self.first.len()).unwrap()),
+          ],
+          &mut NopExternals,
+        )
+        .expect("failed to execute export");
+
+      let first_instructions = wasmi::get_instruction_count();
+      self.first_stats.update(first_instructions as f64);
+
+      // Second
+      wasmi::reset_instruction_count();
+      internal_mem.set(0, self.second).unwrap();
+      module_instance
+        .invoke_export(
+          "sidefuzz",
+          &[
+            RuntimeValue::I32(0),
+            RuntimeValue::I32(i32::try_from(self.second.len()).unwrap()),
+          ],
+          &mut NopExternals,
+        )
+        .expect("failed to execute export");
+
+      let second_instructions = wasmi::get_instruction_count();
+      self.second_stats.update(second_instructions as f64);
+
         }
 
         let t = calculate_t(&self.first_stats, &self.second_stats);
@@ -128,18 +157,18 @@ mod tests {
 
         let one = vec![1u8];
         let ff = vec![255u8];
-        let mut dudect = DudeCT::new(
-            3.2905,    // Success t-value
-            0.674,     // Give up t-value
-            1_000_000, // Give up min samples
-            &one,
-            &ff,
-            |input: &[u8]| {
-                black_box(fibonacci(input[0]));
-            },
-        );
+        //let mut dudect = DudeCT::new(
+        //    3.2905,    // Success t-value
+        //    0.674,     // Give up t-value
+        //    1_000_000, // Give up min samples
+        //    &one,
+        //    &ff,
+        //    |input: &[u8]| {
+        //        black_box(fibonacci(input[0]));
+        //    },
+        //);
 
-        let (_t, result) = dudect.sample(100_000);
-        assert_eq!(result, DudeResult::Ok);
+        //let (_t, result) = dudect.sample(100_000);
+        //assert_eq!(result, DudeResult::Ok);
     }
 }

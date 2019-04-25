@@ -1,14 +1,15 @@
 #[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
 compile_error!(r#"sidefuzz currently only supports x86 and x86_64"#);
 
-pub mod cpucycles;
 pub mod dudect;
 pub mod optimizer;
 
 use dudect::{DudeCT, DudeResult};
 use optimizer::Optimizer;
+use std::convert::TryFrom;
 use std::mem::forget;
 use std::ptr;
+use wasmi::{ImportsBuilder, Module, ModuleInstance, NopExternals, RuntimeValue};
 
 #[derive(Debug, Clone, Default)]
 pub struct InputPair {
@@ -22,109 +23,94 @@ pub struct ScoredInputPair {
   pub pair: InputPair,
 }
 
-pub struct SideFuzz<T>
-where
-  T: Fn(&[u8]),
-{
+pub struct SideFuzz {
   len: usize,
-  function: T,
+  wasm_module: Module,
 }
 
-impl<T> SideFuzz<T>
-where
-  T: Fn(&[u8]),
-{
-  pub fn new(len: usize, function: T) -> Self {
-    SideFuzz { len, function }
-  }
-
-  fn num_executions(&self) -> u64 {
-    // Find a good input
-    // TODO: Check input when check function available
-    let mut input: Vec<u8>;
-    input = (0..self.len).map(|_| rand::random::<u8>()).collect();
-    black_box((self.function)(&input));
-
-    let mut num_executions = 1;
-    loop {
-      let timer = cpu_time::ProcessTime::now();
-      for _ in 0..num_executions {
-        let _ = black_box((self.function)(&input));
-      }
-      // Target of 20 at least microseconds per run
-      let time = timer.elapsed().as_micros();
-      if time > 20 {
-        break;
-      } else {
-        num_executions = num_executions * 2;
-      }
-    }
-
-    num_executions
+impl SideFuzz {
+  pub fn new(len: usize, wasm_module: Module) -> Self {
+    SideFuzz { len, wasm_module }
   }
 
   pub fn run(&self) {
-    // Pin to a single core
-    // TODO: for multi-core checking, pin to different cores
-    println!("Setting core affinity");
-    let core_ids = core_affinity::get_core_ids().unwrap();
-    core_affinity::set_for_current(core_ids[0]);
 
-    // Sample execution time so that we have at least 10 microseconds per run
-    println!("Determining number of executions per measurement");
-    let num_executions = self.num_executions();
-    println!("{} executions per measurement", num_executions);
+    // Instantiate a module with empty imports and
+    // assert that there is no `start` function.
+    let module_instance = ModuleInstance::new(&self.wasm_module, &ImportsBuilder::default())
+      .expect("failed to instantiate wasm module")
+      .assert_no_start();
 
-    let mut time_optimizer = Optimizer::new(self.len, |first: &[u8], second: &[u8]| {
-      let cycles_marker = cpucycles::cpucycles();
-      for _ in 0..num_executions {
-        black_box((self.function)(first));
+    // Get memory instance exported by name 'mem' from the module instance.
+    let internal_mem = module_instance.export_by_name("memory");
+    let internal_mem = internal_mem.expect("Module expected to have 'mem' export");
+    let internal_mem = internal_mem.as_memory().unwrap();
+
+    let mut optimizer = Optimizer::new(self.len, |first: &[u8], second: &[u8]| {
+
+      // First
+      wasmi::reset_instruction_count();
+      internal_mem.set(0, first).unwrap();
+      module_instance
+        .invoke_export(
+          "sidefuzz",
+          &[
+            RuntimeValue::I32(0),
+            RuntimeValue::I32(i32::try_from(first.len()).unwrap()),
+          ],
+          &mut NopExternals,
+        )
+        .expect("failed to execute export");
+
+      let first_instructions = wasmi::get_instruction_count();
+
+      // Second
+      wasmi::reset_instruction_count();
+      internal_mem.set(0, second).unwrap();
+      module_instance
+        .invoke_export(
+          "sidefuzz",
+          &[
+            RuntimeValue::I32(0),
+            RuntimeValue::I32(i32::try_from(second.len()).unwrap()),
+          ],
+          &mut NopExternals,
+        )
+        .expect("failed to execute export");
+
+      let second_instructions = wasmi::get_instruction_count();
+
+      // Difference
+      let diff;
+      if first_instructions >= second_instructions {
+        diff = first_instructions - second_instructions;
+      } else {
+        diff = second_instructions - first_instructions;
       }
-      let first_cycles = cpucycles::cpucycles() - cycles_marker;
 
-      let cycles_marker = cpucycles::cpucycles();
-      for _ in 0..num_executions {
-        black_box((self.function)(second));
-      }
-      let second_cycles = cpucycles::cpucycles() - cycles_marker;
-
-      let ratio: f64 = first_cycles as f64 / second_cycles as f64;
-
-      if ratio.is_nan() {
-        return 0.0;
-      }
-
-      ratio
+      diff as f64
     });
 
     println!("Evolving candidate input pairs");
     let mut best = ScoredInputPair::default(); // defaults to score of zero.
-    let mut average: f64 = 0.0;
     loop {
       // Check results once every 1000 genearations
       for _ in 0..1000 {
-        time_optimizer.step();
+        optimizer.step();
       }
-      let population = time_optimizer.scored_population();
-
-      // Calculate average
-      let sum: f64 = population.iter().fold(0.0, |mut sum, val| {
-        sum += val.score;
-        sum
-      });
-      let new_average = sum / (population.len() as f64);
+      let population = optimizer.scored_population();
+      let new_best = population[0].clone();
 
       println!(
         "{} {} {}",
-        new_average,
+        new_best.score,
         hex::encode(&population[0].pair.first),
         hex::encode(&population[0].pair.second)
       );
 
-      if new_average >= average {
-        best = population[0].clone();
-        average = new_average;
-      } else {
+      if new_best.score > best.score {
+        best = new_best;
+      } else if best.score != 0.0 {
         println!(
           "Checking {} {}",
           hex::encode(&best.pair.first),
@@ -135,20 +121,16 @@ where
         // Return success on t = 4.5 (very high confidence)
         // Give up on t < 0.674 (50% confidence) when over 1 million samples.
         let mut dudect = DudeCT::new(
-          4.5,       // Success t-value
-          0.674,     // Give up t-value
-          1_000_000, // Give up min samples
+          4.5,     // Success t-value
+          0.674,   // Give up t-value
+          100_000, // Give up min samples
           &best.pair.first,
           &best.pair.second,
-          #[inline(never)] |input: &[u8]| {
-            for _ in 0..num_executions {
-              black_box(&(self.function)(input));
-            }
-          },
+          &self.wasm_module,
         );
 
         loop {
-          let (t, result) = dudect.sample(100_000);
+          let (t, result) = dudect.sample(10_000);
           let p = p_value_from_t_value(t);
 
           println!(
@@ -161,7 +143,8 @@ where
           match result {
             DudeResult::Ok => {
               println!(
-                "Found timing difference between these two inputs with {}% confidence:\ninput 1: {}\ninput 2: {}",
+                "Found timing difference of {} instructions between these two inputs with {}% confidence:\ninput 1: {}\ninput 2: {}",
+                best.score,
                 (1.0 - p) * 100.0,
                 hex::encode(&best.pair.first),
                 hex::encode(&best.pair.second)
@@ -170,7 +153,6 @@ where
             }
             DudeResult::Err => {
               best = ScoredInputPair::default();
-              average = 0.0;
               println!(
                 "Candidate input pair rejected: t-statistic small after many samples. Continuing to evolve candidate inputs."
               );

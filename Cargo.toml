@@ -12,6 +12,8 @@ libc = "0.2.51"
 core_affinity = "0.5.9"
 cpu-time = "0.1"
 rolling-stats = "0.1.0"
+wasmi = { path = "./vendor/wasmi" }
 
-[build-dependencies]
-cc = "1.0.35"
+[[bin]]
+name = "sidefuzz"
+doc = false
