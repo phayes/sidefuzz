@@ -1,10 +1,8 @@
-# SideFuzz: Fuzzing for timing side-channel vulnerabilities
+# SideFuzz: Fuzzing for timing side-channel vulnerabilities using wasm
 
-SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography.
+SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to wasm.
 
 Fuzzing Targets can be found here: https://github.com/phayes/sidefuzz-targets
-
-**SideFuzz is a work in progress. There could be bugs that may result in inaccurate results. For example, see https://github.com/phayes/sidefuzz/issues/8**
 
 ### How it works
 
@@ -25,9 +23,8 @@ The current version uses elapsed CPU cycles as it's measurement. Future versions
 
 2. "Dude, is my code constant time?", Reparaz et al. https://eprint.iacr.org/2016/1123.pdf
 
-3. "Rust, dudect and constant-time crypto in debug mode", brycx. 
-    https://brycx.github.io/2019/04/21/rust-dudect-constant-time-crypto.html
-
+3. "Rust, dudect and constant-time crypto in debug mode", brycx.
+   https://brycx.github.io/2019/04/21/rust-dudect-constant-time-crypto.html
 
 ### Related Tools
 
@@ -35,30 +32,30 @@ The current version uses elapsed CPU cycles as it's measurement. Future versions
 
 2. `ctgrind`. Tool for checking that functions are constant time using Valgrind. https://github.com/RustCrypto/utils/tree/master/ctgrind
 
+## Rust
 
-## Usage
-
-Using the fuzzer is incredibly easy. 
+Creating a target in rust is very easy.
 
 ```rust
-fn main() {
-    let input_len = 32; // 32 byte (256 bit) input
-    let fuzzer = sidefuzz::SideFuzz::new(input_len, #[inline(never)]
-    |input: &[u8]| {
-        sidefuzz::black_box(hopefully_constant_fn(input));
-    });
+use std::ptr;
+use std::slice;
+use sidefuzz::black_box;
 
-    fuzzer.run();
+#[no_mangle]
+pub extern "C" fn sidefuzz(ptr: i32, len: i32) {
+  let input: &[u8] = unsafe { slice::from_raw_parts(ptr as _, len as _) };
+  black_box(hopefully_constant_fn(input));
 }
 ```
 
-## Known Issues
+You would then compile and fuzz your target like so:
 
-The fuzzer tends to produce false-positives with `opt-level = 3`. I have yet to determine if this is due to a problem in the fuzzer, or if rust is acutally unable to produce good constant-time code with `opt-level = 3`.  In order to avoid this, add the following to your Cargo.toml in your target project:
-
-```toml
-[profile.release]
-opt-level = 2
+```bash
+rustup target add wasm32-unknown-unknown                          # Only needs to be done once.
+cargo build --release                                             # Always pass the release flag
+sidefuzz 32 ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzz with 32 bytes of input
 ```
 
-You should then compile with `cargo build --release`.  Do not use debug builds (`cargo build`) for fuzzing since your target may include `debug_assert!` calls that are not constant time.
+## Other Language
+
+SideFuzz should work with Go, C, C++ and other langauges that compile to wasm. Formal support is planned in the future.
