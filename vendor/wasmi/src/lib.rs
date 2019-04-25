@@ -131,14 +131,23 @@ use std::error;
 extern crate libm;
 
 
-/// -- START Instruction counting hack --
-use std::sync::atomic::{AtomicUsize, Ordering};
-pub static INSTRUCTION_COUNT: AtomicUsize = AtomicUsize::new(0);
+// -- START Instruction counting hack --
+use std::sync::atomic::{AtomicU64, Ordering};
+static INSTRUCTION_COUNT: AtomicU64 = AtomicU64::new(0);
 
 fn increment_instruction_count() {
     INSTRUCTION_COUNT.fetch_add(1, Ordering::SeqCst);
 }
-/// -- END Instruction counting hack --
+
+/// Get the current instruction count
+pub fn get_instruction_count() -> u64 {
+    INSTRUCTION_COUNT.load(Ordering::SeqCst) as u64
+}
+/// Reset the instruction count
+pub fn reset_instruction_count() {
+    INSTRUCTION_COUNT.store(0, Ordering::SeqCst);
+}
+// -- END Instruction counting hack --
 
 /// Error type which can be thrown by wasm code or by host environment.
 ///
