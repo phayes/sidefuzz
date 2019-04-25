@@ -61,4 +61,4 @@ The fuzzer tends to produce false-positives with `opt-level = 3`. I have yet to 
 opt-level = 2
 ```
 
-You should then compile with `cargo build --release`.  Do not use debug builds (`cargo build`) for fuzzing since your target may include `assert_debug!` calls that are not constant time.
+You should then compile with `cargo build --release`.  Do not use debug builds (`cargo build`) for fuzzing since your target may include `debug_assert!` calls that are not constant time.
