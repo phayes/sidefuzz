@@ -98,12 +98,17 @@ impl SideFuzz {
       let population = optimizer.scored_population();
       let new_best = population[0].clone();
 
-      println!(
-        "{} {} {}",
-        new_best.score,
-        hex::encode(&population[0].pair.first),
-        hex::encode(&population[0].pair.second)
-      );
+      if new_best.score != 0.0 {
+        println!(
+          "{} {} {}",
+          new_best.score,
+          hex::encode(&population[0].pair.first),
+          hex::encode(&population[0].pair.second)
+        );
+      } else {
+        println!("Looks constant-time so far...");
+      }
+
 
       if new_best.score > best.score {
         best = new_best;
