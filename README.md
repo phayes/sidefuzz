@@ -56,9 +56,9 @@ pub extern "C" fn sidefuzz(ptr: i32, len: i32) {
 Compile and fuzz the target like so:
 
 ```bash
-rustup target add wasm32-unknown-unknown                          # Only needs to be done once.
-cargo build cargo build --release --target wasm32-unknown-unknown # Always build in release mode
-sidefuzz 32 ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzz with 32 bytes of input
+rustup target add wasm32-unknown-unknown                            # Only needs to be done once
+cargo build --release --target wasm32-unknown-unknown   # Always build in release mode
+sidefuzz fuzz ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzzing!
 ```
 
 ## Other Languages
