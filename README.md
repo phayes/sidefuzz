@@ -65,11 +65,13 @@ sidefuzz 32 ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzz with 32
 
 SideFuzz works with Go, C, C++ and other langauges that compile to wasm.
 
-The wasm module should provide two exports:
+The wasm module should provide three exports:
 
 1. Memory exported to "memory"
 
-2. A function named "sidefuzz" that takes two `i32` arguments. The first argument is a pointer to the start of the input array, the second argument is the length of the input array.
+2. A function named "len" that provides the desired input array length in bytes.
+
+3. A function named "sidefuzz" that takes two `i32` arguments. The first argument is a pointer to the start of the input array, the second argument is the length of the input array.
 
 The `sidefuzz` function will be called repeatedly during the fuzzing process.
 
