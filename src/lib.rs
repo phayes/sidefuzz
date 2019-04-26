@@ -1,5 +1,11 @@
+
+#[cfg(not(any(target_arch = "wasm32")))]
 pub mod dudect;
+
+#[cfg(not(any(target_arch = "wasm32")))]
 pub mod optimizer;
+
+#[cfg(not(any(target_arch = "wasm32")))]
 pub mod sidefuzz;
 
 use std::mem::forget;
@@ -17,23 +23,6 @@ pub struct ScoredInputPair {
   pub highest: f64,
   pub lowest: f64,
   pub pair: InputPair,
-}
-
-/// A function that is opaque to the optimizer, to allow benchmarks to
-/// pretend to use outputs to assist in avoiding dead-code
-/// elimination.
-///
-/// NOTE: We don't have a proper black box in stable Rust. This is
-/// a workaround implementation, that may have a too big performance overhead,
-/// depending on operation, or it may fail to properly avoid having code
-/// optimized out. It is good enough that it is used.
-#[inline(never)]
-pub fn black_box<D>(dummy: D) -> D {
-  unsafe {
-    let ret = ptr::read_volatile(&dummy);
-    forget(dummy);
-    ret
-  }
 }
 
 /// Given a t-value, the the p-value from it.
@@ -74,3 +63,21 @@ pub fn p_value_from_t_value(t: f64) -> f64 {
 
   panic!("Invalid t value");
 }
+
+/// A function that is opaque to the optimizer, to allow benchmarks to
+/// pretend to use outputs to assist in avoiding dead-code
+/// elimination.
+///
+/// NOTE: We don't have a proper black box in stable Rust. This is
+/// a workaround implementation, that may have a too big performance overhead,
+/// depending on operation, or it may fail to properly avoid having code
+/// optimized out. It is good enough that it is used.
+#[inline(never)]
+pub fn black_box<D>(dummy: D) -> D {
+  unsafe {
+    let ret = ptr::read_volatile(&dummy);
+    forget(dummy);
+    ret
+  }
+}
+
