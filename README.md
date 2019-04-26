@@ -70,14 +70,14 @@ The `sidefuzz` function will be called repeatedly during the fuzzing process.
 
 ## FAQ
 
-1. Why wasm?
+#### 1. Why wasm?
 
 Web Assembly allows us to precisely track the number of instructions executed, the type of instructions executed, and the amount of memory used. This is much more precise than other methods such as tracking wall-time or counting CPU cycles.
 
-2. Why do I alway need to build in release mode?
+#### 2. Why do I alway need to build in release mode?
 
 Many constant-time functions include calls to variabler-time `debug_assert!` that get removed during a release build. Rust's and LLVM optimizer may also mangle supposedly constant-time code in the name of optimization, introducing subtle timing vulnerabilities. Runnig in release mode let's us surface these issues.
 
-3. I need an RNG (Random Number Generator). What do?
+#### 3. I need an RNG (Random Number Generator). What do?
 
 You should make use of a PRNG with a static seed. While this is a bad idea for production code, it's great for fuzzing.
