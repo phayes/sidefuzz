@@ -12,7 +12,10 @@ libc = "0.2.51"
 core_affinity = "0.5.9"
 cpu-time = "0.1"
 rolling-stats = "0.1.0"
+clap = "2.33.0"
 wasmi = { path = "./vendor/wasmi" }
+failure = "0.1.5"
+color-backtrace = { version = "0.1" }
 
 [[bin]]
 name = "sidefuzz"

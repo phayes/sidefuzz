@@ -21,7 +21,7 @@ const BREEDING_POOL: f64 = 0.25;
 
 pub struct Optimizer<T>
 where
-    T: Fn(&[u8], &[u8]) -> f64,
+    T: Fn(&[u8], &[u8]) -> (f64, f64, f64), // (fitness, highest, lowest)
 {
     population: Vec<InputPair>,
     fitness: T,
@@ -29,7 +29,7 @@ where
 
 impl<T> Optimizer<T>
 where
-    T: Fn(&[u8], &[u8]) -> f64,
+    T: Fn(&[u8], &[u8]) -> (f64, f64, f64), // (fitness, highest, lowest),
 {
     pub fn new(len: usize, fitness_function: T) -> Self {
         Optimizer {
@@ -55,9 +55,11 @@ where
         let mut scored: Vec<ScoredInputPair> = Vec::with_capacity(self.population.len());
 
         for individual in self.population.iter() {
-            let fitness = (self.fitness)(&individual.first, &individual.second);
+            let (fitness, highest, lowest) = (self.fitness)(&individual.first, &individual.second);
             scored.push(ScoredInputPair {
                 score: fitness,
+                highest: highest,
+                lowest: lowest,
                 pair: individual.clone(),
             });
         }
@@ -188,7 +190,7 @@ mod tests {
                     score = score - (diff as f64);
                 }
             }
-            score
+            (score, 0.0, 0.0)
         });
 
         // Run one hundred generations
