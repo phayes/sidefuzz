@@ -54,6 +54,7 @@ pub extern "C" fn sidefuzz(ptr: i32, len: i32) {
   black_box(hopefully_constant_fn(input));
 }
 ```
+
 ```toml
 # Cargo.toml
 
@@ -68,7 +69,7 @@ Compile and fuzz the target like so:
 
 ```bash
 rustup target add wasm32-unknown-unknown                            # Only needs to be done once
-cargo build --release --target wasm32-unknown-unknown   # Always build in release mode
+cargo build --release --target wasm32-unknown-unknown               # Always build in release mode
 sidefuzz fuzz ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzzing!
 ```
 
