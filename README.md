@@ -6,7 +6,7 @@ Fuzzing Targets can be found here: https://github.com/phayes/sidefuzz-targets
 
 ### How it works
 
-SideFuzz works by counting wasm instructions executed in the [wasmi](https://github.com/paritytech/wasmi) wasm interpreter. 
+SideFuzz works by counting wasm instructions executed in the [wasmi](https://github.com/paritytech/wasmi) wasm interpreter.
 
 **Phase 1.** Uses a genetic-algorithim optimizer that tries to maximize the instructions executed between two different inputs. It will continue optimizing until subsequent generations of input-pairs no longer produce any meaningful differences in the number of instructions executed. This means that it will optimize until it finds finds a local optimum in the fitness of input pairs.
 
@@ -52,7 +52,7 @@ Compile and fuzz the target like so:
 
 ```bash
 rustup target add wasm32-unknown-unknown                          # Only needs to be done once.
-cargo build --release                                             # Always pass the release flag
+cargo build cargo build --release --target wasm32-unknown-unknown # Always build in release mode
 sidefuzz 32 ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzz with 32 bytes of input
 ```
 
@@ -60,10 +60,24 @@ sidefuzz 32 ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzz with 32
 
 SideFuzz works with Go, C, C++ and other langauges that compile to wasm.
 
-The wasm module should provide two exports: 
+The wasm module should provide two exports:
 
 1. Memory exported to "memory"
 
-2. A function named "sidefuzz" that takes two `i32` arguments. The first argument is a pointer to the start of the input array, the second argument is the length of the input array. 
+2. A function named "sidefuzz" that takes two `i32` arguments. The first argument is a pointer to the start of the input array, the second argument is the length of the input array.
 
-The `sidefuzz` function will be called repeatedly during the fuzzing process. 
+The `sidefuzz` function will be called repeatedly during the fuzzing process.
+
+## FAQ
+
+1. Why wasm?
+
+Web Assembly allows us to precisely track the number of instructions executed, the type of instructions executed, and the amount of memory used. This is much more precise than other methods such as tracking wall-time or counting CPU cycles.
+
+2. Why do I alway need to build in release mode?
+
+Many constant-time functions include calls to variabler-time `debug_assert!` that get removed during a release build. Rust's and LLVM optimizer may also mangle supposedly constant-time code in the name of optimization, introducing subtle timing vulnerabilities. Runnig in release mode let's us surface these issues.
+
+3. I need an RNG (Random Number Generator). What do?
+
+You should make use of a PRNG with a static seed. While this is a bad idea for production code, it's great for fuzzing.
