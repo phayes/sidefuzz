@@ -37,6 +37,8 @@ SideFuzz works by counting instructions executed in the [wasmi](https://github.c
 Creating a target in rust is very easy.
 
 ```rust
+// lib.rs
+
 use std::ptr;
 use std::slice;
 use sidefuzz::black_box;
@@ -51,6 +53,15 @@ pub extern "C" fn sidefuzz(ptr: i32, len: i32) {
   let input: &[u8] = unsafe { slice::from_raw_parts(ptr as _, len as _) };
   black_box(hopefully_constant_fn(input));
 }
+```
+```toml
+# Cargo.toml
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+sidefuzz = {git = "https://github.com/phayes/sidefuzz"}
 ```
 
 Compile and fuzz the target like so:
