@@ -35,8 +35,6 @@ impl SideFuzz {
       }
     };
 
-    dbg!(fuzz_len);
-
     // Get memory instance exported by name 'mem' from the module instance.
     let internal_mem = module_instance.export_by_name("memory");
     let internal_mem = internal_mem.expect("Module expected to have 'mem' export");
