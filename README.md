@@ -63,7 +63,7 @@ sidefuzz fuzz ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzzing!
 
 ## Other Languages
 
-SideFuzz works with Go, C, C++ and other langauges that compile to wasm.
+SideFuzz works with Go, C, C++ and other langauges that compile to wasm. It works in two phases.
 
 The wasm module should provide three exports:
 
