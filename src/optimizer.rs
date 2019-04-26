@@ -5,19 +5,19 @@ use rand::{seq::SliceRandom, Rng};
 // TODO: Find optimal values for these consts
 
 // Population size
-const POPULATION_SIZE: usize = 200;
+const POPULATION_SIZE: usize = 1000;
 
 // Mutation rate
-const MUTATION_RATE: f64 = 0.05;
+const MUTATION_RATE: f64 = 0.25;
 
 // Ratio of "large mutations" (random u8 replacement) vs "small mutations" u8 increment / decrement.
-const LARGE_MUTATION_RATIO: f64 = 0.10;
+const LARGE_MUTATION_RATIO: f64 = 0.25;
 
 // Directly clone this ratio of top performers
-const CLONE_RATIO: f64 = 0.10;
+const CLONE_RATIO: f64 = 0.05;
 
 // Breed from this top percentage of the population
-const BREEDING_POOL: f64 = 0.25;
+const BREEDING_POOL: f64 = 0.10;
 
 pub struct Optimizer<T>
 where

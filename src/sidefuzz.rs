@@ -91,18 +91,19 @@ impl SideFuzz {
 
     println!("Evolving candidate input pairs");
     let mut best = crate::ScoredInputPair::default(); // defaults to score of zero.
+    let mut moving_window = vec![0.0; 10]; // Moving window of size 10
     loop {
-      // Check results once every 1000 genearations
-      for _ in 0..1000 {
+      // Check results once every 500 genearations
+      for _ in 0..500 {
         optimizer.step();
       }
       let population = optimizer.scored_population();
-      let new_best = population[0].clone();
+      let pop_best = population[0].clone(); // Best of this population is ordered first.
 
-      if new_best.score != 0.0 {
+      if pop_best.score != 0.0 {
         println!(
           "{} {} {}",
-          new_best.score,
+          pop_best.score,
           hex::encode(&population[0].pair.first),
           hex::encode(&population[0].pair.second)
         );
@@ -110,59 +111,75 @@ impl SideFuzz {
         println!("Looks constant-time so far...");
       }
 
+      // Adjust moving window
+      moving_window.remove(0);
+      moving_window.push(pop_best.score);
 
-      if new_best.score > best.score {
-        best = new_best;
-      } else if best.score != 0.0 {
-        println!(
-          "Checking {} {}",
-          hex::encode(&best.pair.first),
-          hex::encode(&best.pair.second)
-        );
+      if pop_best.score > best.score {
+        best = pop_best;
+      }
 
-        // Construct DudeCT
-        // Return success on t = 4.5 (very high confidence)
-        // Give up on t < 0.674 (50% confidence) when over 1 million samples.
-        let mut dudect = DudeCT::new(
-          4.5,     // Success t-value
-          0.674,   // Give up t-value
-          100_000, // Give up min samples
-          &best.pair.first,
-          &best.pair.second,
-          &self.wasm_module,
-        );
+      if best.score != 0.0 {
+        // Check the moving window is entirely the same as the best, this means we're maxed out.
+        let mut local_optimum = true;
+        for score in moving_window.iter() {
+          if score != &best.score {
+            local_optimum = false;
+            break;
+          }
+        }
 
-        loop {
-          let (t, result) = dudect.sample(10_000);
-          let p = crate::p_value_from_t_value(t);
-
+        if local_optimum {
           println!(
-            "samples: {}, t-value: {}, confidence: {}%",
-            dudect.len(),
-            t,
-            (1.0 - p) * 100.0
+            "Checking {} {}",
+            hex::encode(&best.pair.first),
+            hex::encode(&best.pair.second)
           );
 
-          match result {
-            DudeResult::Ok => {
-              println!(
+          // Construct DudeCT
+          // Return success on t = 4.5 (very high confidence)
+          // Give up on t < 0.674 (50% confidence) when over 1 million samples.
+          let mut dudect = DudeCT::new(
+            4.5,     // Success t-value
+            0.674,   // Give up t-value
+            100_000, // Give up min samples
+            &best.pair.first,
+            &best.pair.second,
+            &self.wasm_module,
+          );
+
+          loop {
+            let (t, result) = dudect.sample(10_000);
+            let p = crate::p_value_from_t_value(t);
+
+            println!(
+              "samples: {}, t-value: {}, confidence: {}%",
+              dudect.len(),
+              t,
+              (1.0 - p) * 100.0
+            );
+
+            match result {
+              DudeResult::Ok => {
+                println!(
                 "Found timing difference of {} instructions between these two inputs with {}% confidence:\ninput 1: {}\ninput 2: {}",
                 best.score,
                 (1.0 - p) * 100.0,
                 hex::encode(&best.pair.first),
                 hex::encode(&best.pair.second)
               );
-              std::process::exit(0);
-            }
-            DudeResult::Err => {
-              best = crate::ScoredInputPair::default();
-              println!(
+                std::process::exit(0);
+              }
+              DudeResult::Err => {
+                best = crate::ScoredInputPair::default();
+                println!(
                 "Candidate input pair rejected: t-statistic small after many samples. Continuing to evolve candidate inputs."
               );
-              break;
-            }
-            DudeResult::Progress => {
-              continue;
+                break;
+              }
+              DudeResult::Progress => {
+                continue;
+              }
             }
           }
         }
