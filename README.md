@@ -57,7 +57,7 @@ Compile and fuzz the target like so:
 
 ```bash
 rustup target add wasm32-unknown-unknown                            # Only needs to be done once
-cargo build cargo build --release --target wasm32-unknown-unknown   # Always build in release mode
+cargo build --release --target wasm32-unknown-unknown   # Always build in release mode
 sidefuzz fuzz ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzzing!
 ```
 
