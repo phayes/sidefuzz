@@ -76,7 +76,7 @@ Web Assembly allows us to precisely track the number of instructions executed, t
 
 #### 2. Why do I alway need to build in release mode?
 
-Many constant-time functions include calls to variabler-time `debug_assert!` that get removed during a release build. Rust's and LLVM optimizer may also mangle supposedly constant-time code in the name of optimization, introducing subtle timing vulnerabilities. Runnig in release mode let's us surface these issues.
+Many constant-time functions include calls to variable-time `debug_assert!()` functions that get removed during a release build. Rust's and LLVM optimizer may also mangle supposedly constant-time code in the name of optimization, introducing subtle timing vulnerabilities. Runnig in release mode let's us surface these issues.
 
 #### 3. I need an RNG (Random Number Generator). What do?
 
