@@ -42,6 +42,11 @@ use std::slice;
 use sidefuzz::black_box;
 
 #[no_mangle]
+pub extern "C" fn len() -> i32 {
+    return 32; // Fuzz using a 32 byte input.
+}
+
+#[no_mangle]
 pub extern "C" fn sidefuzz(ptr: i32, len: i32) {
   let input: &[u8] = unsafe { slice::from_raw_parts(ptr as _, len as _) };
   black_box(hopefully_constant_fn(input));
