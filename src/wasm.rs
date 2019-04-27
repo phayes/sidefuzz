@@ -1,10 +1,10 @@
-
+use crate::errors::SideFuzzError;
 use float_duration::{FloatDuration, TimePoint};
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::Instant;
-use crate::errors::SideFuzzError;
+
 use wasmi::{
   ImportsBuilder, MemoryRef, Module, ModuleInstance, ModuleRef, NopExternals, RuntimeValue,
 };

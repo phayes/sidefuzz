@@ -73,6 +73,12 @@ cargo build --release --target wasm32-unknown-unknown               # Always bui
 sidefuzz fuzz ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzzing!
 ```
 
+Results can be checked like so:
+
+```bash
+sidefuzz check my_target.wasm 01250bf9 ff81f7b3
+```
+
 ## Other Languages
 
 SideFuzz works with Go, C, C++ and other langauges that compile to wasm.

@@ -1,7 +1,8 @@
 use clap::{App, Arg, SubCommand};
 use failure::Error;
-use sidefuzz::fuzz::Fuzz;
 
+use sidefuzz::check::Check;
+use sidefuzz::fuzz::Fuzz;
 fn main() -> Result<(), Error> {
     color_backtrace::install();
 
@@ -62,9 +63,31 @@ fn main() -> Result<(), Error> {
         };
 
         fuzz.run();
-    } else {
-        app.print_long_help()?;
+        std::process::exit(0);
     }
 
+    // Check command
+    if let Some(sub_match) = matches.subcommand_matches("check") {
+        let filename = sub_match.value_of("wasm-file").unwrap();
+
+        let first = sub_match.value_of("input-1").unwrap();
+        let first = hex::decode(first)?;
+
+        let second = sub_match.value_of("input-2").unwrap();
+        let second = hex::decode(second)?;
+
+        let mut check = match Check::from_file(filename, first, second) {
+            Ok(check) => check,
+            Err(err) => {
+                println!("Error: {}", err);
+                std::process::exit(1);
+            }
+        };
+
+        check.run();
+        std::process::exit(0);
+    }
+
+    app.print_long_help()?;
     Ok(())
 }
