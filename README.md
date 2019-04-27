@@ -108,3 +108,7 @@ You should make use of a PRNG with a static seed. While this is a bad idea for p
 #### 5. The fuzzer gave me invalid inputs, what now?
 
 You should panic (causing a wasm trap). This will signal to the fuzzer that the inputs are invalid.
+
+#### 6. I need to do some variable-time set-up. How do I do that?
+
+You should use [`lazy_static`](https://crates.io/crates/lazy_static) to do any set-up work (like generating keys etc). The target is always run once to prime lazy statics before the real fuzzing starts.
