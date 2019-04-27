@@ -8,14 +8,12 @@ edition = "2018"
 rand = "0.6.5"
 hex = "0.3.2"
 statrs = "0.10.0"
-libc = "0.2.51"
-core_affinity = "0.5.9"
-cpu-time = "0.1"
 rolling-stats = "0.1.0"
 clap = "2.33.0"
 wasmi = { path = "./vendor/wasmi" }
 failure = "0.1.5"
 color-backtrace = { version = "0.1" }
+float_duration = {git = "https://github.com/phayes/rust-float-duration"}
 
 [[bin]]
 name = "sidefuzz"

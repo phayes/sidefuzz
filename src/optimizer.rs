@@ -1,8 +1,5 @@
-use crate::InputPair;
-use crate::ScoredInputPair;
+use crate::util::*;
 use rand::{seq::SliceRandom, Rng};
-
-// TODO: Find optimal values for these consts
 
 // Population size
 const POPULATION_SIZE: usize = 1000;
@@ -21,7 +18,7 @@ const BREEDING_POOL: f64 = 0.10;
 
 pub struct Optimizer<T>
 where
-    T: Fn(&[u8], &[u8]) -> (f64, f64, f64), // (fitness, highest, lowest)
+    T: FnMut(&[u8], &[u8]) -> ScoredInputPair,
 {
     population: Vec<InputPair>,
     fitness: T,
@@ -29,7 +26,7 @@ where
 
 impl<T> Optimizer<T>
 where
-    T: Fn(&[u8], &[u8]) -> (f64, f64, f64), // (fitness, highest, lowest),
+    T: FnMut(&[u8], &[u8]) -> ScoredInputPair,
 {
     pub fn new(len: usize, fitness_function: T) -> Self {
         Optimizer {
@@ -38,46 +35,20 @@ where
         }
     }
 
-    // Get the population, ordered most fit to least fit.
-    pub fn population(&self) -> Vec<InputPair> {
-        let mut scored = self.scored_population();
-
-        let mut result: Vec<InputPair> = Vec::with_capacity(self.population.len());
-        for individual in scored.drain(..) {
-            result.push(individual.pair);
-        }
-
-        result
-    }
-
-    pub fn scored_population(&self) -> Vec<ScoredInputPair> {
+    pub fn scored_population(&mut self) -> Vec<ScoredInputPair> {
         // Get fitness of all individuals
         let mut scored: Vec<ScoredInputPair> = Vec::with_capacity(self.population.len());
 
         for individual in self.population.iter() {
-            let (fitness, highest, lowest) = (self.fitness)(&individual.first, &individual.second);
-            scored.push(ScoredInputPair {
-                score: fitness,
-                highest: highest,
-                lowest: lowest,
-                pair: individual.clone(),
-            });
+            let score = (self.fitness)(&individual.first, &individual.second);
+            scored.push(score);
         }
 
         // Sort most fit to least fit
+        // Unwrap OK since score cannot be NAN.
         scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
 
         scored
-    }
-
-    pub fn average_score(&self) -> f64 {
-        let scored = self.scored_population();
-        let sum: f64 = scored.iter().fold(0.0, |mut sum, val| {
-            sum += val.score;
-            sum
-        });
-
-        sum / (scored.len() as f64)
     }
 
     pub fn step(&mut self) {
@@ -172,6 +143,7 @@ fn random_individual(len: usize) -> InputPair {
 #[cfg(test)]
 mod tests {
     use crate::optimizer::Optimizer;
+    use crate::util::*;
 
     #[test]
     fn optimizer_test() {
@@ -190,7 +162,15 @@ mod tests {
                     score = score - (diff as f64);
                 }
             }
-            (score, 0.0, 0.0)
+            ScoredInputPair {
+                score,
+                highest: 0.0,
+                lowest: 0.0,
+                pair: InputPair {
+                    first: first.to_vec(),
+                    second: second.to_vec(),
+                },
+            }
         });
 
         // Run one hundred generations
@@ -199,9 +179,9 @@ mod tests {
         }
 
         // This will be sorted
-        let population = optimizer.population();
+        let population = optimizer.scored_population();
 
-        assert_eq!(population[0].first, target);
-        assert_eq!(population[0].second, target);
+        assert_eq!(population[0].pair.first, target);
+        assert_eq!(population[0].pair.second, target);
     }
 }

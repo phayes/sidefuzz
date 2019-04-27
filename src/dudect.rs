@@ -1,7 +1,8 @@
+// Contains an implementation of dudect
 
+
+use crate::wasm::WasmModule;
 use rolling_stats::Stats;
-use std::convert::TryFrom;
-use wasmi::{ImportsBuilder, Module, ModuleInstance, NopExternals, RuntimeValue};
 #[derive(Eq, PartialEq, Debug)]
 pub enum DudeResult {
     Ok,       // Success
@@ -15,7 +16,7 @@ pub struct DudeCT<'a> {
     fail_min_samples: usize,
     first: &'a [u8],
     second: &'a [u8],
-    wasm_module: &'a Module,
+    module: WasmModule,
     first_stats: Stats<f64>,
     second_stats: Stats<f64>,
 }
@@ -27,12 +28,13 @@ impl<'a> DudeCT<'a> {
         fail_min_samples: usize,
         first: &'a [u8],
         second: &'a [u8],
-        wasm_module: &'a Module,
+        module: WasmModule,
     ) -> Self {
 
-        // Todo: Do a single instantiation of the module
-        // 1. Check the lengths.
-        // 2. Check to make sure it doesn't trap.
+        if module.fuzz_len() != first.len() || module.fuzz_len() != second.len() {
+            // TODO: return err;
+            panic!("Invalid len");
+        }
 
         DudeCT {
             t_threshold,
@@ -40,7 +42,7 @@ impl<'a> DudeCT<'a> {
             fail_min_samples,
             first,
             second,
-            wasm_module,
+            module,
             first_stats: Stats::new(),
             second_stats: Stats::new(),
         }
@@ -51,50 +53,11 @@ impl<'a> DudeCT<'a> {
     }
 
     pub fn sample(&mut self, num_samples: u64) -> (f64, DudeResult) {
-        // TODO: Because the module might secretly store state, we should not panic, and instead resturn a Result.
-
-        // Instantiate a module with empty imports and
-        // assert that there is no `start` function.
-        let module_instance = ModuleInstance::new(&self.wasm_module, &ImportsBuilder::default())
-            .expect("failed to instantiate wasm module")
-            .assert_no_start();
-
-        // Get memory instance exported by name 'mem' from the module instance.
-        let internal_mem = module_instance.export_by_name("memory");
-        let internal_mem = internal_mem.expect("Module expected to have 'memory' export");
-        let internal_mem = internal_mem.as_memory().unwrap();
-
         for _ in 0..num_samples {
-            // First
-            wasmi::reset_instruction_count();
-            internal_mem.set(0, self.first).unwrap();
-            let result = module_instance.invoke_export(
-                "sidefuzz",
-                &[
-                    RuntimeValue::I32(0),
-                    RuntimeValue::I32(i32::try_from(self.first.len()).unwrap()),
-                ],
-                &mut NopExternals,
-            );
-            result.expect("WASM module trapped. This is a bug, please report it to https://github.com/phayes/sidefuzz");
-
-            let first_instructions = wasmi::get_instruction_count();
+            // TODO: Ignore results??
+            let first_instructions = self.module.count_instructions(self.first).unwrap();
+            let second_instructions = self.module.count_instructions(self.second).unwrap();
             self.first_stats.update(first_instructions as f64);
-
-            // Second
-            wasmi::reset_instruction_count();
-            internal_mem.set(0, self.second).unwrap();
-            let result = module_instance.invoke_export(
-                "sidefuzz",
-                &[
-                    RuntimeValue::I32(0),
-                    RuntimeValue::I32(i32::try_from(self.second.len()).unwrap()),
-                ],
-                &mut NopExternals,
-            );
-            result.expect("WASM module trapped. This is a bug, please report it to https://github.com/phayes/sidefuzz");
-
-            let second_instructions = wasmi::get_instruction_count();
             self.second_stats.update(second_instructions as f64);
         }
 

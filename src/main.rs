@@ -1,16 +1,6 @@
 use clap::{App, Arg, SubCommand};
 use failure::Error;
-use sidefuzz::sidefuzz::SideFuzz;
-use std::fs::File;
-use std::io::prelude::*;
-use wasmi::Module;
-
-fn load_from_file(filename: &str) -> Module {
-    let mut file = File::open(filename).unwrap();
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf).unwrap();
-    Module::from_buffer(buf).unwrap()
-}
+use sidefuzz::fuzz::Fuzz;
 
 fn main() -> Result<(), Error> {
     color_backtrace::install();
@@ -34,6 +24,28 @@ fn main() -> Result<(), Error> {
                         .required(true)
                         .index(1),
                 ),
+        )
+        .subcommand(
+            SubCommand::with_name("check")
+                .about("Check wasm file with two inputs")
+                .arg(
+                    Arg::with_name("wasm-file")
+                        .help("wasm file fuzzing target")
+                        .required(true)
+                        .index(1),
+                )
+                .arg(
+                    Arg::with_name("input-1")
+                        .help("first input in hexedecimal format")
+                        .required(true)
+                        .index(2),
+                )
+                .arg(
+                    Arg::with_name("input-2")
+                        .help("second input in hexedecimal format")
+                        .required(true)
+                        .index(3),
+                ),
         );
 
     let matches = app.clone().get_matches();
@@ -41,9 +53,15 @@ fn main() -> Result<(), Error> {
     // Fuzz command
     if let Some(sub_match) = matches.subcommand_matches("fuzz") {
         let filename = sub_match.value_of("wasm-file").unwrap();
-        let module = load_from_file(filename);
-        let fuzzer = SideFuzz::new(module);
-        fuzzer.run();
+        let mut fuzz = match Fuzz::from_file(filename) {
+            Ok(fuzz) => fuzz,
+            Err(err) => {
+                println!("Error: {}", err);
+                std::process::exit(1);
+            }
+        };
+
+        fuzz.run();
     } else {
         app.print_long_help()?;
     }
