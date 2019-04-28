@@ -17,16 +17,16 @@ pub struct WasmModule {
 }
 
 impl WasmModule {
-  pub fn new(module: Vec<u8>) -> Self {
+  pub fn new(module: Vec<u8>) -> Result<Self, SideFuzzError> {
     let parsed = Module::from_buffer(&module).unwrap();
-    let instance = ModuleInstance::new(&parsed, &ImportsBuilder::default())
-      .expect("failed to instantiate wasm module")
-      .assert_no_start();
+    let instance = ModuleInstance::new(&parsed, &ImportsBuilder::default())?.assert_no_start();
 
     // Get memory instance exported by name 'mem' from the module instance.
     let memory = instance.export_by_name("memory");
-    let memory = memory.expect("Module expected to have 'mem' export");
-    let memory = memory.as_memory().unwrap();
+    let memory = memory.ok_or(SideFuzzError::WasmModuleNoMemory)?;
+    let memory = memory
+      .as_memory()
+      .ok_or(SideFuzzError::WasmModuleBadMemory)?;
 
     // Get the fuzz length
     let fuzz_len = fuzz_len(&instance);
@@ -40,16 +40,16 @@ impl WasmModule {
 
     // Run it once to prime lazy statics.
     let input: Vec<u8> = (0..fuzz_len).map(|_| rand::random::<u8>()).collect();
-    crate::black_box(wasm_module.count_instructions(&input).unwrap());
+    crate::black_box(wasm_module.count_instructions(&input)?);
 
-    wasm_module
+    Ok(wasm_module)
   }
 
   pub fn from_file(filename: &str) -> Result<Self, SideFuzzError> {
     let mut file = File::open(filename)?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
-    Ok(Self::new(buf))
+    Ok(Self::new(buf)?)
   }
 
   pub fn fuzz_len(&self) -> usize {
@@ -61,8 +61,11 @@ impl WasmModule {
   }
 
   // Count instructions for a given input
-  pub fn count_instructions(&mut self, input: &[u8]) -> Result<u64, ()> {
-    self.memory.set(0, input).unwrap();
+  pub fn count_instructions(&mut self, input: &[u8]) -> Result<u64, SideFuzzError> {
+    self
+      .memory
+      .set(0, input)
+      .map_err(|e| SideFuzzError::MemorySetError(e))?;
     wasmi::reset_instruction_count();
     let result = self.instance.invoke_export(
       "sidefuzz",
@@ -75,12 +78,12 @@ impl WasmModule {
     if let Err(err) = result {
       // If we've got a MemoryAccessOutOfBounds error, then we've corrupted our memory.
       // In a real application this would be a crash, so reboot the instance and start over.
-      if let wasmi::Error::Trap(trap) = err {
+      if let wasmi::Error::Trap(trap) = &err {
         if let wasmi::TrapKind::MemoryAccessOutOfBounds = trap.kind() {
           self.reboot();
         }
       }
-      return Err(());
+      return Err(SideFuzzError::WasmError(err));
     }
     let count = wasmi::get_instruction_count();
 
@@ -89,25 +92,27 @@ impl WasmModule {
 
   // Restart / Reboot the instance
   fn reboot(&mut self) {
-    let new = Self::new(self.module.clone());
+    // This should be ok to expect here since the module has already been instantiated previously.
+    let new = Self::new(self.module.clone()).expect("Could not reboot wasm module instance.");
     self.instance = new.instance;
     self.memory = new.memory;
   }
 
   // Measure and report the running time for a single execution
-  pub fn measure_time(&mut self) -> FloatDuration {
+  pub fn measure_time(&mut self) -> Result<FloatDuration, SideFuzzError> {
     let input: Vec<u8> = (0..self.fuzz_len).map(|_| rand::random::<u8>()).collect();
     let start_time = Instant::now();
-    self.count_instructions(&input).unwrap();
+    self.count_instructions(&input)?;
     let end_time = Instant::now();
 
-    end_time.float_duration_since(start_time).unwrap()
+    Ok(end_time.float_duration_since(start_time).unwrap())
   }
 }
 
 impl Clone for WasmModule {
   fn clone(&self) -> Self {
-    Self::new(self.module.clone())
+    // This should be ok to expect here since the module has already been instantiated previously.
+    Self::new(self.module.clone()).expect("Unable to clone wasm module")
   }
 }
 

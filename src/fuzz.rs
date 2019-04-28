@@ -1,10 +1,10 @@
 // This file contains the "fuzz" subcommand
 
 use crate::dudect::{DudeCT, DudeResult};
-use crate::optimizer::Optimizer;
-use crate::util::*;
 use crate::errors::SideFuzzError;
+use crate::util::*;
 use crate::wasm::WasmModule;
+use crate::optimizer::Optimizer;
 
 pub struct Fuzz {
   module: WasmModule,
@@ -20,13 +20,13 @@ impl Fuzz {
     Ok(Self::new(module))
   }
 
-  pub fn run(&mut self) {
+  pub fn run(&mut self) -> Result<(), SideFuzzError> {
     // Grab a copy of module bytes, we will pass this into DudeCT later
     let module_bytes = self.module.bytes();
 
     // Print approximately fuzzing duration
     // duration = run-time * aprox-num-loops * num-generations-per-loop * population-size
-    let duration = self.module.measure_time() * 40.0 * 500.0 * 1000.0;
+    let duration = self.module.measure_time()? * 40.0 * 500.0 * 1000.0;
     println!("Fuzzing will take approximately {:.*}", 0, duration);
 
     let mut optimizer = Optimizer::new(self.module.fuzz_len(), |first: &[u8], second: &[u8]| {
@@ -89,7 +89,7 @@ impl Fuzz {
             100_000, // Give up min samples
             &best.pair.first,
             &best.pair.second,
-            WasmModule::new(module_bytes.clone()),
+            WasmModule::new(module_bytes.clone())?,
           );
 
           loop {

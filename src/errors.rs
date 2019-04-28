@@ -3,6 +3,7 @@
 use failure::*;
 use std::convert::From;
 use std::io::Error as IOError;
+use wasmi::Error as WasmError;
 
 #[derive(Debug, Fail)]
 pub enum SideFuzzError {
@@ -12,14 +13,27 @@ pub enum SideFuzzError {
     #[fail(display = "Could not read file: {}", 0)]
     CouldNotReadFile(IOError),
 
-    #[fail(display = "invalid toolchain name: {}", name)]
-    InvalidToolchainName { name: String },
-    #[fail(display = "unknown toolchain version: {}", version)]
-    UnknownToolchainVersion { version: String },
+    #[fail(display = "wasm error: {}", 0)]
+    WasmError(WasmError),
+    
+    #[fail(display = "wasm module expected to have 'memory' export")]
+    WasmModuleNoMemory,
+
+    #[fail(display = "wasm module exported non-memory to 'memory' export")]
+    WasmModuleBadMemory,
+
+    #[fail(display = "error writing input memory to wasm: {}", 0)]
+    MemorySetError(WasmError)
 }
 
 impl From<IOError> for SideFuzzError {
     fn from(error: IOError) -> Self {
         SideFuzzError::CouldNotReadFile(error)
+    }
+}
+
+impl From<WasmError> for SideFuzzError {
+    fn from(error: WasmError) -> Self {
+        SideFuzzError::WasmError(error)
     }
 }

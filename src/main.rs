@@ -9,7 +9,7 @@ fn main() -> Result<(), Error> {
     let mut app = App::new("sidefuzz")
         .version("0.1.0")
         .author("Patrick Hayes <patrick.d.hayes@gmail.com>")
-        .about("Fuzzes for timing side-channel vulnerabilities using wasm")
+        .about("Fuzzes for timing side-channel vulnerabilities using wasm. \nhttps://github.com/phayes/sidefuzz")
         .arg(
             Arg::with_name("v")
                 .short("v")
@@ -62,8 +62,14 @@ fn main() -> Result<(), Error> {
             }
         };
 
-        fuzz.run();
-        std::process::exit(0);
+        let result = fuzz.run();
+        match result {
+            Ok(_) => std::process::exit(0),
+            Err(err) => {
+                println!("Error: {}", err);
+                std::process::exit(0);
+            }
+        }
     }
 
     // Check command
@@ -87,6 +93,8 @@ fn main() -> Result<(), Error> {
         check.run();
         std::process::exit(0);
     }
+
+    // TODO: Resume command
 
     app.print_long_help()?;
     Ok(())
