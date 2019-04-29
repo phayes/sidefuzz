@@ -13,7 +13,9 @@ pub struct WasmModule {
   module: Vec<u8>,
   instance: ModuleRef,
   memory: MemoryRef,
-  fuzz_len: usize,
+  fuzz_ptr: i32,
+  fuzz_len: i32,
+
 }
 
 impl WasmModule {
@@ -28,19 +30,19 @@ impl WasmModule {
       .as_memory()
       .ok_or(SideFuzzError::WasmModuleBadMemory)?;
 
-    // Get the fuzz length
-    let fuzz_len = fuzz_len(&instance);
-
     let mut wasm_module = Self {
       module: module,
       instance: instance,
       memory: memory.to_owned(),
-      fuzz_len,
+      fuzz_ptr: 0,
+      fuzz_len: 0,
     };
 
-    // Run it once to prime lazy statics.
-    let input: Vec<u8> = (0..fuzz_len).map(|_| rand::random::<u8>()).collect();
-    crate::black_box(wasm_module.count_instructions(&input)?);
+    // Set input pointers
+    wasm_module.set_input_pointer();
+
+    // Prime lazy statics
+    wasm_module.prime_lazy_statics();
 
     Ok(wasm_module)
   }
@@ -53,7 +55,7 @@ impl WasmModule {
   }
 
   pub fn fuzz_len(&self) -> usize {
-    self.fuzz_len
+    self.fuzz_len as usize
   }
 
   pub fn bytes(&self) -> Vec<u8> {
@@ -107,6 +109,60 @@ impl WasmModule {
 
     Ok(end_time.float_duration_since(start_time).unwrap())
   }
+
+  // Prime lazy statics
+  pub fn prime_lazy_statics(&mut self) {
+
+    // Prime until it completes successfully.
+    loop {
+      let input: Vec<u8> = (0..self.fuzz_len).map(|_| rand::random::<u8>()).collect();
+      let result = self.count_instructions(&input);
+      if result.is_ok() {
+        return;
+      }
+    }
+
+  }
+
+  // Set the input fuzz length
+  fn set_input_pointer(&mut self) {
+    // Call "sidefuzz" to prime INPUT static global and set it's length
+    let _ = crate::black_box(self.count_instructions(&vec![]));
+
+    // Call the "input_pointer" exported function to get the pointer to the input
+    let input_pointer = self
+      .instance
+      .invoke_export("input_pointer", &[], &mut NopExternals)
+      .expect("wasm module did not export a input_pointer() function")
+      .unwrap();
+
+    // Call the "input_len" exported function to get the input length
+    let input_len = self
+      .instance
+      .invoke_export("input_len", &[], &mut NopExternals)
+      .expect("wasm module did not export a input_len() function")
+      .unwrap();
+
+    let input_pointer = match input_pointer {
+      wasmi::RuntimeValue::I32(inner) => inner,
+      _ => {
+        // TODO: return don't panic;
+        panic!("Invalid input_pointer() return type");
+      }
+    };
+
+    let input_len = match input_len {
+      wasmi::RuntimeValue::I32(inner) => inner,
+      _ => {
+        // TODO: return don't panic;
+        panic!("Invalid input_len() return type");
+      }
+    };
+
+    self.fuzz_ptr = input_pointer;
+    self.fuzz_len = input_len;
+  }
+
 }
 
 impl Clone for WasmModule {
@@ -114,27 +170,5 @@ impl Clone for WasmModule {
     // This should be ok to expect here since the module has already been instantiated previously.
     Self::new(self.module.clone()).expect("Unable to clone wasm module")
   }
-}
-
-
-/// Get the array input length for fuzzing
-///
-/// This is defined by the fuzzing target by exporting the "len()" function.
-fn fuzz_len(module_instance: &ModuleRef) -> usize {
-  // Call the "len" exported function to get the desired fuzzing length.
-  let fuzz_len = module_instance
-    .invoke_export("len", &[], &mut NopExternals)
-    .expect("wasm module did not export a len() function")
-    .unwrap();
-
-  let fuzz_len = match fuzz_len {
-    wasmi::RuntimeValue::I32(inner) => inner as usize,
-    _ => {
-      // TODO: return don't panic;
-      panic!("Invalid len() return type");
-    }
-  };
-
-  fuzz_len
 }
 
