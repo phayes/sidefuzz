@@ -16,7 +16,7 @@ hex = "0.3.2"
 statrs = "0.10.0"
 rolling-stats = "0.1.0"
 clap = "2.33.0"
-wasmi = {version = "99.0.0-vendored", path = 'vendor/wasmi'}
+wasmi = {version = "99.0.0-vendored", path = 'vendor/wasmi'} # weird version hack to make vendoring work
 failure = "0.1.5"
 color-backtrace = { version = "0.1" }
 float_duration = {git = "https://github.com/phayes/rust-float-duration"}
