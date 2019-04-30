@@ -41,7 +41,7 @@ Creating a target in rust is very easy.
 
 #[no_mangle]
 pub extern "C" fn fuzz() {
-  let input = sidefuzz::get_input(32); // 32 bytes of of fuzzing input as a &[u8]
+  let input = sidefuzz::fetch_input(32); // 32 bytes of of fuzzing input as a &[u8]
   sidefuzz::black_box(my_hopefully_constant_fn(input));
 }
 ```
