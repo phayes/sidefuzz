@@ -30,14 +30,13 @@ impl<'a> DudeCT<'a> {
         first: &'a [u8],
         second: &'a [u8],
         module: WasmModule,
-    ) -> Self {
+    ) -> Result<Self, SideFuzzError> {
 
         if module.fuzz_len() != first.len() || module.fuzz_len() != second.len() {
-            // TODO: return err;
-            panic!("Invalid len");
+            return Err(SideFuzzError::InputsDifferentSizes)
         }
 
-        DudeCT {
+        Ok(DudeCT {
             t_threshold,
             t_fail,
             fail_min_samples,
@@ -46,7 +45,7 @@ impl<'a> DudeCT<'a> {
             module,
             first_stats: Stats::new(),
             second_stats: Stats::new(),
-        }
+        })
     }
 
     pub fn len(&self) -> usize {

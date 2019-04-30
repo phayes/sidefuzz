@@ -51,7 +51,7 @@ impl Check {
       &self.input.first,
       &self.input.second,
       self.module.clone(),
-    );
+    )?;
 
     loop {
       let (t, result) = dudect.sample(10_000)?;
