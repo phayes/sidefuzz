@@ -100,6 +100,8 @@ git clone git@github.com:phayes/sidefuzz.git
 cd sidefuzz && cargo install --path .
 ```
 
+(Cannot currently do `cargo install sidefuzz` because of [this issue](https://github.com/phayes/sidefuzz/issues/12))
+
 ## FAQ
 
 #### 1. Why wasm?
