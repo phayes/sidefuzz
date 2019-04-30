@@ -19,23 +19,7 @@ SideFuzz works by counting instructions executed in the [wasmi](https://github.c
 
 - The t-statistic stays low, even after significant sampling. In this case the candidate input pairs are rejected and SideFuzz returns to phase 1, resuming the genetic-algorithim optimizer to find another local optimum.
 
-### Furthur Reading
-
-1. "DifFuzz: Differential Fuzzing for Side-Channel Analysis", Nilizadeh et al.
-   https://arxiv.org/abs/1811.07005
-
-2. "Dude, is my code constant time?", Reparaz et al. https://eprint.iacr.org/2016/1123.pdf
-
-3. "Rust, dudect and constant-time crypto in debug mode", brycx.
-   https://brycx.github.io/2019/04/21/rust-dudect-constant-time-crypto.html
-
-### Related Tools
-
-1. `dudect-bencher`. An implementation of the DudeCT constant-time function tester. In comparison to SideFuzz, this tool more closely adheres to the original dudect design. https://crates.io/crates/dudect-bencher
-
-2. `ctgrind`. Tool for checking that functions are constant time using Valgrind. https://github.com/RustCrypto/utils/tree/master/ctgrind
-
-## Rust
+## Creating a Rust fuzz target
 
 Creating a target in rust is very easy.
 
@@ -78,7 +62,7 @@ When fixing variable-time code, sidefuzz can also help with `sidefuzz count` to 
 cargo build --release && sidefuzz count my_target.wasm 01250bf9
 ```
 
-## Other Languages
+## Creating a fuzz target in other languages
 
 SideFuzz works with Go, C, C++ and other langauges that compile to wasm.
 
@@ -127,3 +111,19 @@ You should panic (causing a wasm trap). This will signal to the fuzzer that the 
 #### 6. I need to do some variable-time set-up. How do I do that?
 
 You should use [`lazy_static`](https://crates.io/crates/lazy_static) to do any set-up work (like generating keys etc). The target is always run once to prime lazy statics before the real fuzzing starts.
+
+## Related Tools
+
+1. `dudect-bencher`. An implementation of the DudeCT constant-time function tester. In comparison to SideFuzz, this tool more closely adheres to the original dudect design. https://crates.io/crates/dudect-bencher
+
+2. `ctgrind`. Tool for checking that functions are constant time using Valgrind. https://github.com/RustCrypto/utils/tree/master/ctgrind
+
+## Furthur Reading
+
+1. "DifFuzz: Differential Fuzzing for Side-Channel Analysis", Nilizadeh et al.
+   https://arxiv.org/abs/1811.07005
+
+2. "Dude, is my code constant time?", Reparaz et al. https://eprint.iacr.org/2016/1123.pdf
+
+3. "Rust, dudect and constant-time crypto in debug mode", brycx.
+   https://brycx.github.io/2019/04/21/rust-dudect-constant-time-crypto.html
