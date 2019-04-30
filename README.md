@@ -1,5 +1,8 @@
 ## SideFuzz: Fuzzing for timing side-channel vulnerabilities
 
+[![docs](https://docs.rs/sidefuzz/badge.svg)](https://docs.rs/sidefuzz)
+[![crates.io](https://meritbadge.herokuapp.com/sidefuzz)](https://crates.io/crates/sidefuzz)
+
 SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to [wasm](https://webassembly.org).
 
 Fuzzing Targets can be found here: https://github.com/phayes/sidefuzz-targets
