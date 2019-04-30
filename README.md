@@ -19,6 +19,16 @@ SideFuzz works by counting instructions executed in the [wasmi](https://github.c
 
 - The t-statistic stays low, even after significant sampling. In this case the candidate input pairs are rejected and SideFuzz returns to phase 1, resuming the genetic-algorithim optimizer to find another local optimum.
 
+## Installation
+
+```
+rustup target add wasm32-unknown-unknown
+git clone git@github.com:phayes/sidefuzz.git
+cd sidefuzz && cargo install --path .
+```
+
+(Cannot currently do `cargo install sidefuzz` because of [this issue](https://github.com/phayes/sidefuzz/issues/12))
+
 ## Creating a Rust fuzz target
 
 Creating a target in rust is very easy.
@@ -75,16 +85,6 @@ The wasm module should provide four exports:
 3. A function named "input_pointer" that returns an i32 pointer to a location in linear memory where we can can write an array of input bytes. The "fuzz" fuction should read this array of bytes as input for it's fuzzing.
 
 4. A function named "input_len" that returns an i32 with the desired length of input in bytes.
-
-## Installation
-
-```
-rustup target add wasm32-unknown-unknown
-git clone git@github.com:phayes/sidefuzz.git
-cd sidefuzz && cargo install --path .
-```
-
-(Cannot currently do `cargo install sidefuzz` because of [this issue](https://github.com/phayes/sidefuzz/issues/12))
 
 ## FAQ
 
