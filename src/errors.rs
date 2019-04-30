@@ -15,7 +15,7 @@ pub enum SideFuzzError {
 
     #[fail(display = "wasm error: {}", 0)]
     WasmError(WasmError),
-    
+
     #[fail(display = "wasm module expected to have 'memory' export")]
     WasmModuleNoMemory,
 
@@ -25,8 +25,11 @@ pub enum SideFuzzError {
     #[fail(display = "error writing input memory to wasm: {}", 0)]
     MemorySetError(WasmError),
 
-    #[fail(display = "requested fuzzing input length of {} is too long. 1024 bytes is the maximum.", 0)]
-    FuzzLenTooLong(usize)
+    #[fail(
+        display = "requested fuzzing input length of {} is too long. 1024 bytes is the maximum.",
+        0
+    )]
+    FuzzLenTooLong(u32),
 }
 
 impl From<IOError> for SideFuzzError {

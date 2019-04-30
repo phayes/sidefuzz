@@ -1,21 +1,17 @@
 use crate::errors::SideFuzzError;
 use float_duration::{FloatDuration, TimePoint};
-use std::convert::TryFrom;
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::Instant;
 
-use wasmi::{
-  ImportsBuilder, MemoryRef, Module, ModuleInstance, ModuleRef, NopExternals, RuntimeValue,
-};
+use wasmi::{ImportsBuilder, MemoryRef, Module, ModuleInstance, ModuleRef, NopExternals};
 
 pub struct WasmModule {
   module: Vec<u8>,
   instance: ModuleRef,
   memory: MemoryRef,
-  fuzz_ptr: i32,
-  fuzz_len: i32,
-
+  fuzz_ptr: u32,
+  fuzz_len: u32,
 }
 
 impl WasmModule {
@@ -39,10 +35,10 @@ impl WasmModule {
     };
 
     // Set input pointers
-    wasm_module.set_input_pointer();
+    wasm_module.set_input_pointer()?;
 
     // Prime lazy statics
-    wasm_module.prime_lazy_statics();
+    wasm_module.prime_lazy_statics()?;
 
     Ok(wasm_module)
   }
@@ -66,17 +62,12 @@ impl WasmModule {
   pub fn count_instructions(&mut self, input: &[u8]) -> Result<u64, SideFuzzError> {
     self
       .memory
-      .set(0, input)
+      .set(self.fuzz_ptr, input)
       .map_err(|e| SideFuzzError::MemorySetError(e))?;
     wasmi::reset_instruction_count();
-    let result = self.instance.invoke_export(
-      "sidefuzz",
-      &[
-        RuntimeValue::I32(0),
-        RuntimeValue::I32(i32::try_from(input.len()).unwrap()),
-      ],
-      &mut NopExternals,
-    );
+    let result = self
+      .instance
+      .invoke_export("sidefuzz", &[], &mut NopExternals);
     if let Err(err) = result {
       // If we've got a MemoryAccessOutOfBounds error, then we've corrupted our memory.
       // In a real application this would be a crash, so reboot the instance and start over.
@@ -111,21 +102,25 @@ impl WasmModule {
   }
 
   // Prime lazy statics
-  pub fn prime_lazy_statics(&mut self) {
+  pub fn prime_lazy_statics(&mut self) -> Result<(), SideFuzzError> {
 
     // Prime until it completes successfully.
+    let mut i = 0;
     loop {
       let input: Vec<u8> = (0..self.fuzz_len).map(|_| rand::random::<u8>()).collect();
       let result = self.count_instructions(&input);
       if result.is_ok() {
-        return;
+        return Ok(());
+      }
+      i += 1;
+      if i >= 100 {
+        return Err(result.unwrap_err());
       }
     }
-
   }
 
   // Set the input fuzz length
-  fn set_input_pointer(&mut self) {
+  fn set_input_pointer(&mut self) -> Result<(), SideFuzzError> {
     // Call "sidefuzz" to prime INPUT static global and set it's length
     let _ = crate::black_box(self.count_instructions(&vec![]));
 
@@ -159,8 +154,14 @@ impl WasmModule {
       }
     };
 
-    self.fuzz_ptr = input_pointer;
-    self.fuzz_len = input_len;
+    if input_len > 1024 {
+      return Err(SideFuzzError::FuzzLenTooLong(input_len as u32));
+    }
+
+    self.fuzz_ptr = input_pointer as u32;
+    self.fuzz_len = input_len as u32;
+
+    Ok(())
   }
 
 }

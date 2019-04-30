@@ -15,6 +15,9 @@ failure = "0.1.5"
 color-backtrace = { version = "0.1" }
 float_duration = {git = "https://github.com/phayes/rust-float-duration"}
 
+[dependencies]
+lazy_static = "1.3.0"
+
 [[bin]]
 name = "sidefuzz"
 doc = false
