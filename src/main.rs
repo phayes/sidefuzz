@@ -108,8 +108,14 @@ fn main() -> Result<(), Error> {
             }
         };
 
-        check.run();
-        std::process::exit(0);
+        let result = check.run();
+        match result {
+            Ok(_) => std::process::exit(0),
+            Err(err) => {
+                println!("Error: {}", err);
+                std::process::exit(0);
+            }
+        }
     }
 
     // Count command

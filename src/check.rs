@@ -33,7 +33,7 @@ impl Check {
     Self::new(module, first, second)
   }
 
-  pub fn run(&mut self) {
+  pub fn run(&mut self) -> Result<(), SideFuzzError> {
     // Get the instruction counts
     let scored_input = ScoredInputPair::generate(
       &mut self.module,
@@ -54,7 +54,7 @@ impl Check {
     );
 
     loop {
-      let (t, result) = dudect.sample(10_000);
+      let (t, result) = dudect.sample(10_000)?;
       let p = p_value_from_t_value(t);
 
       println!(

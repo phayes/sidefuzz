@@ -76,7 +76,7 @@ static mut INPUT_LEN: i32 = 0;
 // This is a VERY odd fuction that provides us with a really nice external API.
 // 1. It is called once before fuzzing starts in order to set the size of INPUT.
 // 2. After it is called once, we call input_pointer and input_len from the host to get a stable pointer to INPUT.
-// 3. Fuzzing starts, we write data to INPUT from the host, then call the exported `sidefuzz` function.
+// 3. Fuzzing starts, we write data to INPUT from the host, then call the exported `fuzz` function.
 pub fn fetch_input(len: i32) -> &'static [u8] {
   // This use of unsafe since wasm is single-threaded and nothing else is accessing INPUT_LEN.
   unsafe {

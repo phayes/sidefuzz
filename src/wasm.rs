@@ -125,30 +125,26 @@ impl WasmModule {
     // Call the "input_pointer" exported function to get the pointer to the input
     let input_pointer = self
       .instance
-      .invoke_export("input_pointer", &[], &mut NopExternals)
-      .expect("wasm module did not export a input_pointer() function")
-      .unwrap();
+      .invoke_export("input_pointer", &[], &mut NopExternals)?
+      .ok_or(SideFuzzError::WasmModuleNoInputPointer)?;
 
     // Call the "input_len" exported function to get the input length
     let input_len = self
       .instance
-      .invoke_export("input_len", &[], &mut NopExternals)
-      .expect("wasm module did not export a input_len() function")
-      .unwrap();
+      .invoke_export("input_len", &[], &mut NopExternals)?
+      .ok_or(SideFuzzError::WasmModuleNoInputLen)?;
 
     let input_pointer = match input_pointer {
       wasmi::RuntimeValue::I32(inner) => inner,
       _ => {
-        // TODO: return don't panic;
-        panic!("Invalid input_pointer() return type");
+        return Err(SideFuzzError::WasmModuleBadInputPointer);
       }
     };
 
     let input_len = match input_len {
       wasmi::RuntimeValue::I32(inner) => inner,
       _ => {
-        // TODO: return don't panic;
-        panic!("Invalid input_len() return type");
+        return Err(SideFuzzError::WasmModuleBadInpuLen);
       }
     };
 

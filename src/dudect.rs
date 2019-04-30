@@ -1,8 +1,9 @@
 // Contains an implementation of dudect
 
-
+use crate::errors::SideFuzzError;
 use crate::wasm::WasmModule;
 use rolling_stats::Stats;
+
 #[derive(Eq, PartialEq, Debug)]
 pub enum DudeResult {
     Ok,       // Success
@@ -52,11 +53,10 @@ impl<'a> DudeCT<'a> {
         self.first_stats.count + self.second_stats.count
     }
 
-    pub fn sample(&mut self, num_samples: u64) -> (f64, DudeResult) {
+    pub fn sample(&mut self, num_samples: u64) -> Result<(f64, DudeResult), SideFuzzError> {
         for _ in 0..num_samples {
-            // TODO: Ignore results??
-            let first_instructions = self.module.count_instructions(self.first).unwrap();
-            let second_instructions = self.module.count_instructions(self.second).unwrap();
+            let first_instructions = self.module.count_instructions(self.first)?;
+            let second_instructions = self.module.count_instructions(self.second)?;
             self.first_stats.update(first_instructions as f64);
             self.second_stats.update(second_instructions as f64);
         }
@@ -65,14 +65,14 @@ impl<'a> DudeCT<'a> {
 
         // Return results when t value is above threshold
         if t >= self.t_threshold {
-            (t, DudeResult::Ok)
+            Ok((t, DudeResult::Ok))
         }
         // Check if we should give up
         else if self.first_stats.count > self.fail_min_samples && t <= self.t_fail {
-            (t, DudeResult::Err)
+            Ok((t, DudeResult::Err))
         } else {
             // Neither success nor failure, keep going.
-            (t, DudeResult::Progress)
+            Ok((t, DudeResult::Progress))
         }
     }
 }

@@ -10,7 +10,10 @@ pub enum SideFuzzError {
     #[fail(display = "The first input and the second input are not the same size.")]
     InputsDifferentSizes,
 
-    #[fail(display = "The input is of the wrong length for this fuzzing target. The target wants an input of {} bytes.", 0)]
+    #[fail(
+        display = "The input is of the wrong length for this fuzzing target. The target wants an input of {} bytes.",
+        0
+    )]
     InputsWrongSize(usize),
 
     #[fail(display = "Could not read file: {}", 0)]
@@ -24,6 +27,21 @@ pub enum SideFuzzError {
 
     #[fail(display = "wasm module exported non-memory to 'memory' export")]
     WasmModuleBadMemory,
+
+    #[fail(display = "wasm module expected to have 'input_pointer' that returns an i32")]
+    WasmModuleNoInputPointer,
+
+    #[fail(display = "wasm module expected to have 'input_len' that returns an i32")]
+    WasmModuleNoInputLen,
+
+    #[fail(display = "wasm module expected to have 'fuzz' function export")]
+    WasmModuleNoFuzz,
+
+    #[fail(display = "wasm module input_pointer returned bad type, i32 expected.")]
+    WasmModuleBadInputPointer,
+
+    #[fail(display = "wasm module 'input_len' returned bad type, i32 expected.")]
+    WasmModuleBadInpuLen,
 
     #[fail(display = "error writing input memory to wasm: {}", 0)]
     MemorySetError(WasmError),

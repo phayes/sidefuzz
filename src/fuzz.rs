@@ -2,9 +2,9 @@
 
 use crate::dudect::{DudeCT, DudeResult};
 use crate::errors::SideFuzzError;
-use crate::util::*;
-use crate::wasm::WasmModule;
 use crate::optimizer::Optimizer;
+use crate::wasm::WasmModule;
+use crate::util::*;
 
 pub struct Fuzz {
   module: WasmModule,
@@ -93,7 +93,7 @@ impl Fuzz {
           );
 
           loop {
-            let (t, result) = dudect.sample(10_000);
+            let (t, result) = dudect.sample(10_000)?;
             let p = p_value_from_t_value(t);
 
             println!(
