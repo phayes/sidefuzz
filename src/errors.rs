@@ -10,6 +10,9 @@ pub enum SideFuzzError {
     #[fail(display = "The first input and the second input are not the same size.")]
     InputsDifferentSizes,
 
+    #[fail(display = "The input is of the wrong length for this fuzzing target. The target wants an input of {} bytes.", 0)]
+    InputsWrongSize(usize),
+
     #[fail(display = "Could not read file: {}", 0)]
     CouldNotReadFile(IOError),
 

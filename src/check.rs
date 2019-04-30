@@ -18,6 +18,10 @@ impl Check {
       return Err(SideFuzzError::InputsDifferentSizes);
     }
 
+    if first.len() != module.fuzz_len() {
+      return Err(SideFuzzError::InputsWrongSize(module.fuzz_len()));
+    }
+
     Ok(Check {
       module: module,
       input: InputPair { first, second },

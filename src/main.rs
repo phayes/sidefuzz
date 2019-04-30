@@ -1,7 +1,9 @@
 use clap::{App, Arg, SubCommand};
 use failure::Error;
 
+
 use sidefuzz::check::Check;
+use sidefuzz::count::Count;
 use sidefuzz::fuzz::Fuzz;
 fn main() -> Result<(), Error> {
     color_backtrace::install();
@@ -47,6 +49,22 @@ fn main() -> Result<(), Error> {
                         .required(true)
                         .index(3),
                 ),
+        )
+        .subcommand(
+            SubCommand::with_name("count")
+                .about("Count the number of instructions executed for a single input.")
+                .arg(
+                    Arg::with_name("wasm-file")
+                        .help("wasm file fuzzing target")
+                        .required(true)
+                        .index(1),
+                )
+                .arg(
+                    Arg::with_name("input")
+                        .help("Input in hexedecimal format")
+                        .required(true)
+                        .index(2),
+                )
         );
 
     let matches = app.clone().get_matches();
@@ -94,7 +112,24 @@ fn main() -> Result<(), Error> {
         std::process::exit(0);
     }
 
-    // TODO: Resume command
+    // Count command
+    if let Some(sub_match) = matches.subcommand_matches("count") {
+        let filename = sub_match.value_of("wasm-file").unwrap();
+
+        let input = sub_match.value_of("input").unwrap();
+        let input = hex::decode(input)?;
+
+        let mut count = match Count::from_file(filename, input) {
+            Ok(count) => count,
+            Err(err) => {
+                println!("Error: {}", err);
+                std::process::exit(1);
+            }
+        };
+
+        count.run();
+        std::process::exit(0);
+    }
 
     app.print_long_help()?;
     Ok(())

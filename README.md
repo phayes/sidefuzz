@@ -59,16 +59,20 @@ sidefuzz = {git = "https://github.com/phayes/sidefuzz"}
 Compile and fuzz the target like so:
 
 ```bash
-cargo install sidefuzz                                              # Only needs to be done once
-rustup target add wasm32-unknown-unknown                            # Only needs to be done once
 cargo build --release --target wasm32-unknown-unknown               # Always build in release mode
-sidefuzz fuzz ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzzing!
+sidefuzz fuzz ./target/wasm32-unknown-unknown/release/my_target.wasm # Fuzzing!
 ```
 
 Results can be checked like so:
 
 ```bash
 sidefuzz check my_target.wasm 01250bf9 ff81f7b3
+```
+
+When fixing variable-time code, sidefuzz can also help with `sidefuzz count` to quickly count the number of instructions executed by the target.
+
+```bash
+cargo build --release && sidefuzz count my_target.wasm 01250bf9
 ```
 
 ## Other Languages
@@ -81,9 +85,17 @@ The wasm module should provide four exports:
 
 2. A function named "fuzz". This function will be repeatedly called during the fuzzing process.
 
-3. A function named "input_pointer" that returns an i32 pointer to a location in linear memory where we can can write a an array of bytes. The "fuzz" fuction should read this array of bytes as input for it's fuzzing.
+3. A function named "input_pointer" that returns an i32 pointer to a location in linear memory where we can can write an array of input bytes. The "fuzz" fuction should read this array of bytes as input for it's fuzzing.
 
 4. A function named "input_len" that returns an i32 with the desired length of input in bytes.
+
+## Installation
+
+```
+rustup target add wasm32-unknown-unknown
+git clone git@github.com:phayes/sidefuzz.git
+cd sidefuzz && cargo install --path .
+```
 
 ## FAQ
 
@@ -97,7 +109,7 @@ Many constant-time functions include calls to variable-time `debug_assert!()` fu
 
 #### 3. I need an RNG (Random Number Generator). What do?
 
-You should make use of a PRNG with a static seed. While this is a bad idea for production code, it's great for fuzzing.
+You should make use of a PRNG with a static seed. While this is a bad idea for production code, it's great for fuzzing. See the [rsa_encrypt_pkcs1v15_message target](https://github.com/phayes/sidefuzz-targets/blob/master/rsa_encrypt_pkcs1v15_message/src/lib.rs) for an example on how to do this.
 
 #### 4. What's up with `black_box` ?
 

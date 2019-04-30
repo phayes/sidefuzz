@@ -16,6 +16,11 @@ pub mod fuzz;
 #[doc(hidden)]
 pub mod check;
 
+// The count command
+#[cfg(not(any(target_arch = "wasm32")))]
+#[doc(hidden)]
+pub mod count;
+
 // Wasm Module wrapper
 #[cfg(not(any(target_arch = "wasm32")))]
 pub(crate) mod wasm;
