@@ -56,7 +56,7 @@ pub extern "C" fn fuzz() {
 crate-type = ["cdylib"]
 
 [dependencies]
-sidefuzz = {git = "https://github.com/phayes/sidefuzz"}
+sidefuzz = "0.1.1"
 ```
 
 Compile and fuzz the target like so:
