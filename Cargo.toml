@@ -1,6 +1,6 @@
 [package]
 name = "sidefuzz"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["phayes <patrick.d.hayes@gmail.com>"]
 edition = "2018"
 readme = "README.md"
@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/phayes/sidefuzz"
 description = "Fuzzer to automatically find side-channel (timing) vulnerabilities"
 keywords = ["fuzzing", "constant-time", "cryptography", "wasm"]
-categories = ["cryptography", "testing"]
+categories = ["cryptography", "development-tools::testing"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rand = "0.6.5"
