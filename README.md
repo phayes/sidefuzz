@@ -113,7 +113,7 @@ You should make use of a PRNG with a static seed. While this is a bad idea for p
 
 #### 4. What's up with `black_box` ?
 
-`sidefuzz::black_box` is used to avoid dead-code elimination. Becauee we are interested in exercising the fuzzed code instead of getting results from it, the exported `sidefuzz` function doesn't return anything. The Rust optimizer sees all functions that don't return as dead-code and will try to eliminate them as part of it's optimizations. `black_box` is a function that is opaque to the optimizer, allowing us to exercise functions that don't return without them being optimized away. It should be used whenever calling a function that doesn't return anything or where we are ignoring the output returned.
+`sidefuzz::black_box` is used to avoid dead-code elimination. Because we are interested in exercising the fuzzed code instead of getting results from it, the exported `fuzz` function doesn't return anything. The Rust optimizer sees all functions that don't return as dead-code and will try to eliminate them as part of it's optimizations. `black_box` is a function that is opaque to the optimizer, allowing us to exercise functions that don't return without them being optimized away. It should be used whenever calling a function that doesn't return anything or where we are ignoring the output returned.
 
 #### 5. The fuzzer gave me invalid inputs, what now?
 
