@@ -63,8 +63,8 @@ static mut INPUT_LEN: i32 = 0;
 /// Calling it with different lengths will result in invalid fuzzing.
 ///
 /// Example:
-/// ```rust
-/// let input = sidefuzz::input(32); // get 32 bytes of input
+/// ```ignore
+/// let input = sidefuzz::fetch_input(32); // get 32 bytes of input
 /// sidefuzz::black_box(my_contant_time_fn(input));
 /// ```
 ///

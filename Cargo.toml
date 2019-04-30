@@ -3,6 +3,9 @@ name = "sidefuzz"
 version = "0.1.0"
 authors = ["phayes <patrick.d.hayes@gmail.com>"]
 edition = "2018"
+readme = "README.md"
+description = "Fuzzer to automatically find side-channel (timing) vulnerabilities"
+keywords = ["fuzzing", "constant-time", "cryptography", "wasm"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rand = "0.6.5"

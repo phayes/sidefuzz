@@ -39,19 +39,10 @@ Creating a target in rust is very easy.
 ```rust
 // lib.rs
 
-use std::ptr;
-use std::slice;
-use sidefuzz::black_box;
-
 #[no_mangle]
-pub extern "C" fn len() -> i32 {
-    return 32; // Fuzz using a 32 byte input.
-}
-
-#[no_mangle]
-pub extern "C" fn sidefuzz(ptr: i32, len: i32) {
-  let input: &[u8] = unsafe { slice::from_raw_parts(ptr as _, len as _) };
-  black_box(hopefully_constant_fn(input));
+pub extern "C" fn fuzz() {
+  let input = sidefuzz::get_input(32); // 32 bytes of of fuzzing input as a &[u8]
+  sidefuzz::black_box(my_hopefully_constant_fn(input));
 }
 ```
 
@@ -68,6 +59,7 @@ sidefuzz = {git = "https://github.com/phayes/sidefuzz"}
 Compile and fuzz the target like so:
 
 ```bash
+cargo install sidefuzz                                              # Only needs to be done once
 rustup target add wasm32-unknown-unknown                            # Only needs to be done once
 cargo build --release --target wasm32-unknown-unknown               # Always build in release mode
 sidefuzz fuzz ./target/wasm32-unknown-unknown/release/mytarget.wasm # Fuzzing!
@@ -83,15 +75,15 @@ sidefuzz check my_target.wasm 01250bf9 ff81f7b3
 
 SideFuzz works with Go, C, C++ and other langauges that compile to wasm.
 
-The wasm module should provide three exports:
+The wasm module should provide four exports:
 
 1. Memory exported to "memory"
 
-2. A function named "len" that provides the desired input array length in bytes.
+2. A function named "fuzz". This function will be repeatedly called during the fuzzing process.
 
-3. A function named "sidefuzz" that takes two `i32` arguments. The first argument is a pointer to the start of the input array, the second argument is the length of the input array.
+3. A function named "input_pointer" that returns an i32 pointer to a location in linear memory where we can can write a an array of bytes. The "fuzz" fuction should read this array of bytes as input for it's fuzzing.
 
-The `sidefuzz` function will be called repeatedly during the fuzzing process.
+4. A function named "input_len" that returns an i32 with the desired length of input in bytes.
 
 ## FAQ
 

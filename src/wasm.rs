@@ -65,9 +65,7 @@ impl WasmModule {
       .set(self.fuzz_ptr, input)
       .map_err(|e| SideFuzzError::MemorySetError(e))?;
     wasmi::reset_instruction_count();
-    let result = self
-      .instance
-      .invoke_export("sidefuzz", &[], &mut NopExternals);
+    let result = self.instance.invoke_export("fuzz", &[], &mut NopExternals);
     if let Err(err) = result {
       // If we've got a MemoryAccessOutOfBounds error, then we've corrupted our memory.
       // In a real application this would be a crash, so reboot the instance and start over.
@@ -104,7 +102,7 @@ impl WasmModule {
   // Prime lazy statics
   pub fn prime_lazy_statics(&mut self) -> Result<(), SideFuzzError> {
 
-    // Prime until it completes successfully.
+    // Prime until it completes successfully (limited to 100 attemps).
     let mut i = 0;
     loop {
       let input: Vec<u8> = (0..self.fuzz_len).map(|_| rand::random::<u8>()).collect();
