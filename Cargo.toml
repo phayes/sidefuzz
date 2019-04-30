@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/phayes/sidefuzz"
 description = "Fuzzer to automatically find side-channel (timing) vulnerabilities"
 keywords = ["fuzzing", "constant-time", "cryptography", "wasm"]
-categories = ["cryptography"]
+categories = ["cryptography", "testing"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rand = "0.6.5"
