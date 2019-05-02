@@ -71,7 +71,7 @@ sidefuzz check my_target.wasm 01250bf9 ff81f7b3
 When fixing variable-time code, sidefuzz can also help with `sidefuzz count` to quickly count the number of instructions executed by the target.
 
 ```bash
-cargo build --release && sidefuzz count my_target.wasm 01250bf9
+sidefuzz count my_target.wasm 01250bf9
 ```
 
 ## Creating a fuzz target in other languages
