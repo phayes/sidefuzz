@@ -122,7 +122,7 @@ You should use [`lazy_static`](https://crates.io/crates/lazy_static) to do any s
 
 ## Furthur Reading
 
-1. "DifFuzz: Differential Fuzzing for Side-Channel Analysis", Nilizadeh et al.
+1. "DifFuzz: Differential Fuzzing for Side-Channel Analysis", Nilizadeh, Noller, Păsăreanu.
    https://arxiv.org/abs/1811.07005
 
 2. "Dude, is my code constant time?", Reparaz et al. https://eprint.iacr.org/2016/1123.pdf
