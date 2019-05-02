@@ -39,7 +39,6 @@ Creating a target in rust is very easy.
 
 ```rust
 // lib.rs
-
 #[no_mangle]
 pub extern "C" fn fuzz() {
   let input = sidefuzz::fetch_input(32); // 32 bytes of of fuzzing input as a &[u8]
@@ -49,7 +48,6 @@ pub extern "C" fn fuzz() {
 
 ```toml
 # Cargo.toml
-
 [lib]
 crate-type = ["cdylib"]
 
