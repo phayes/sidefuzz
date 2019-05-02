@@ -1,4 +1,4 @@
-## SideFuzz: Fuzzing for timing side-channel vulnerabilities
+## SideFuzz: Fuzzing for side-channel vulnerabilities
 
 [![docs](https://docs.rs/sidefuzz/badge.svg)](https://docs.rs/sidefuzz)
 [![crates.io](https://meritbadge.herokuapp.com/sidefuzz)](https://crates.io/crates/sidefuzz)
