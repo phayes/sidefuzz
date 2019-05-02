@@ -19,6 +19,10 @@ SideFuzz works by counting instructions executed in the [wasmi](https://github.c
 
 - The t-statistic stays low, even after significant sampling. In this case the candidate input pairs are rejected and SideFuzz returns to phase 1, resuming the genetic-algorithim optimizer to find another local optimum.
 
+### What it gets you
+
+Fuzzing with SideFuzz shows that your Rust code can be constant-time, but doesn't show that it *is* constant-time on all architectures. This is because LLVM backends [can and will](http://www.reparaz.net/oscar/misc/cmov.html) ruin constant-time Rust / LLVM-IR when compiling to machine-code. SideFuzz should be considered a "good first step" to be followed up with [dudect-bencher](https://crates.io/crates/dudect-bencher) and [ctgrind](https://github.com/RustCrypto/utils/tree/master/ctgrind). It should also be noted that proper compiler support for constant-time code-generation is an unsolved problem in the Rust ecosystem. There have been some ideas around using [cranelift](https://github.com/CraneStation/cranelift) for constant-time code generation, but things are still in the brainstorming phase. 
+
 ## Installation
 
 ```
