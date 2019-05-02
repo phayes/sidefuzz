@@ -1,30 +1,31 @@
-/// SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to wasm.
-///
-/// See the [README](https://github.com/phayes/sidefuzz) for complete documentation.
-///
-/// Creating a target in rust is done in the following way:
-///
-/// ```
-/// // lib.rs
-/// #[no_mangle]
-/// pub extern "C" fn fuzz() {
-///   let input = sidefuzz::fetch_input(32); // 32 bytes of of fuzzing input as a &[u8]
-///   sidefuzz::black_box(my_hopefully_constant_fn(input));
-/// }
-///
-/// # Cargo.toml
-/// [lib]
-/// crate-type = ["cdylib"]
-///
-/// [dependencies]
-/// sidefuzz = "0.1.2"
-/// ```
-/// Compile and fuzz the target like so:
-///
-/// ```bash
-/// cargo build --release --target wasm32-unknown-unknown                # Always build in release mode
-/// sidefuzz fuzz ./target/wasm32-unknown-unknown/release/my_target.wasm # Fuzzing!
-/// ```
+//! SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to wasm.
+//!
+//! See the [README](https://github.com/phayes/sidefuzz) for complete documentation.
+//!
+//! Creating a target in rust is done in the following way:
+//!
+//! ```rust,ignore
+//! // lib.rs
+//! #[no_mangle]
+//! pub extern "C" fn fuzz() {
+//!   let input = sidefuzz::fetch_input(32); // 32 bytes of of fuzzing input as a &[u8]
+//!   sidefuzz::black_box(my_hopefully_constant_fn(input));
+//! }
+//! ```
+//! ```toml
+//! # Cargo.toml
+//! [lib]
+//! crate-type = ["cdylib"]
+//!
+//! [dependencies]
+//! sidefuzz = "0.1.2"
+//! ```
+//! Compile and fuzz the target like so:
+//!
+//! ```bash
+//! cargo build --release --target wasm32-unknown-unknown                # Always build in release mode
+//! sidefuzz fuzz ./target/wasm32-unknown-unknown/release/my_target.wasm # Fuzzing!
+//! ```
 
 // An implementation of dudect
 #[cfg(not(any(target_arch = "wasm32")))]
