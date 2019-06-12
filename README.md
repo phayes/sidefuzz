@@ -2,6 +2,7 @@
 
 [![docs](https://docs.rs/sidefuzz/badge.svg)](https://docs.rs/sidefuzz)
 [![crates.io](https://meritbadge.herokuapp.com/sidefuzz)](https://crates.io/crates/sidefuzz)
+[![docs](https://docs.rs/sidefuzz/badge.svg)](https://docs.rs/sidefuzz)
 [![patreon](https://img.shields.io/badge/patreon-donate-green.svg)](https://patreon.com/phayes)
 
 SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to [wasm](https://webassembly.org).
