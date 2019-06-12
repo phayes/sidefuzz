@@ -133,5 +133,4 @@ You should use [`lazy_static`](https://crates.io/crates/lazy_static) to do any s
    
  ## Contributors
  
- 1. Patrick Hayes ([linkedin](https://www.linkedin.com/in/patrickdhayes/)) ([github](https://github.com/phayes)) - ([linkedin](https://www.linkedin.com/in/patrickdhayes/)) (<details><summary>email</summary>patrick.d.hayes@gmail.com
-</details>) - Available for hire.
+ 1. Patrick Hayes ([linkedin](https://www.linkedin.com/in/patrickdhayes/)) ([github](https://github.com/phayes)) - Available for hire.
