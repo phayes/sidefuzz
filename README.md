@@ -3,6 +3,7 @@
 [![docs](https://docs.rs/sidefuzz/badge.svg)](https://docs.rs/sidefuzz)
 [![crates.io](https://meritbadge.herokuapp.com/sidefuzz)](https://crates.io/crates/sidefuzz)
 [![patreon](https://img.shields.io/badge/patreon-donate-green.svg)](https://patreon.com/phayes)
+[![flattr](https://img.shields.io/badge/flattr-donate-green.svg)](https://flattr.com/@phayes)
 
 SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to [wasm](https://webassembly.org).
 
@@ -22,7 +23,7 @@ SideFuzz works by counting instructions executed in the [wasmi](https://github.c
 
 ### What it gets you
 
-Fuzzing with SideFuzz shows that your Rust code can be constant-time, but doesn't show that it *is* constant-time on all architectures. This is because LLVM backends [can and will](http://www.reparaz.net/oscar/misc/cmov.html) ruin constant-time Rust / LLVM-IR when compiling to machine-code. SideFuzz should be considered a "good first step" to be followed up with [dudect-bencher](https://crates.io/crates/dudect-bencher) and [ctgrind](https://github.com/RustCrypto/utils/tree/master/ctgrind). It should also be noted that proper compiler support for constant-time code-generation is an unsolved problem in the Rust ecosystem. There have been some ideas around using [cranelift](https://github.com/CraneStation/cranelift) for constant-time code generation, but things are still in the brainstorming phase. 
+Fuzzing with SideFuzz shows that your Rust code can be constant-time, but doesn't show that it _is_ constant-time on all architectures. This is because LLVM backends [can and will](http://www.reparaz.net/oscar/misc/cmov.html) ruin constant-time Rust / LLVM-IR when compiling to machine-code. SideFuzz should be considered a "good first step" to be followed up with [dudect-bencher](https://crates.io/crates/dudect-bencher) and [ctgrind](https://github.com/RustCrypto/utils/tree/master/ctgrind). It should also be noted that proper compiler support for constant-time code-generation is an unsolved problem in the Rust ecosystem. There have been some ideas around using [cranelift](https://github.com/CraneStation/cranelift) for constant-time code generation, but things are still in the brainstorming phase.
 
 ## Installation
 
@@ -130,7 +131,7 @@ You should use [`lazy_static`](https://crates.io/crates/lazy_static) to do any s
 
 3. "Rust, dudect and constant-time crypto in debug mode", brycx.
    https://brycx.github.io/2019/04/21/rust-dudect-constant-time-crypto.html
-   
- ## Contributors
- 
- 1. Patrick Hayes ([linkedin](https://www.linkedin.com/in/patrickdhayes/)) ([github](https://github.com/phayes)) - Available for hire.
+
+## Contributors
+
+1.  Patrick Hayes ([linkedin](https://www.linkedin.com/in/patrickdhayes/)) ([github](https://github.com/phayes)) - Available for hire.
