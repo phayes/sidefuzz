@@ -2,6 +2,7 @@
 
 [![docs](https://docs.rs/sidefuzz/badge.svg)](https://docs.rs/sidefuzz)
 [![crates.io](https://meritbadge.herokuapp.com/sidefuzz)](https://crates.io/crates/sidefuzz)
+[![docs](https://docs.rs/sidefuzz/badge.svg)](https://docs.rs/sidefuzz)
 [![patreon](https://img.shields.io/badge/patreon-donate-green.svg)](https://patreon.com/phayes)
 [![flattr](https://img.shields.io/badge/flattr-donate-green.svg)](https://flattr.com/@phayes)
 
