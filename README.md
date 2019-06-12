@@ -130,3 +130,8 @@ You should use [`lazy_static`](https://crates.io/crates/lazy_static) to do any s
 
 3. "Rust, dudect and constant-time crypto in debug mode", brycx.
    https://brycx.github.io/2019/04/21/rust-dudect-constant-time-crypto.html
+   
+ ## Contributors
+ 
+ 1. [Patrick Hayes](https://www.linkedin.com/in/patrickdhayes/). patrick.d.hayes@gmail.com. Available for hire.
+ 
