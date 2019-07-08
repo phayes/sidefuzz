@@ -14,7 +14,7 @@ categories = ["cryptography", "development-tools::testing"]
 rand = "0.6.5"
 hex = "0.3.2"
 statrs = "0.10.0"
-rolling-stats = "0.1.0"
+rolling-stats = "0.2.1"
 clap = "2.33.0"
 failure = "0.1.5"
 color-backtrace = { version = "0.1" }
