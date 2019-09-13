@@ -11,7 +11,7 @@ keywords = ["fuzzing", "constant-time", "cryptography", "wasm"]
 categories = ["cryptography", "development-tools::testing"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rand = "0.6.5"
+rand = "0.7.1"
 hex = "0.3.2"
 statrs = "0.10.0"
 rolling-stats = "0.1.0"
