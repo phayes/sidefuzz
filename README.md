@@ -5,6 +5,8 @@
 [![docs](https://docs.rs/sidefuzz/badge.svg)](https://docs.rs/sidefuzz)
 [![patreon](https://img.shields.io/badge/patreon-donate-green.svg)](https://patreon.com/phayes)
 [![flattr](https://img.shields.io/badge/flattr-donate-green.svg)](https://flattr.com/@phayes)
+<a href="https://github.com/taibangle/awesome-china"><img src="https://raw.githubusercontent.com/phayes/awesome-china/master/badges/awesome-china.png" width="98"></a>
+<a href="https://github.com/taibangle/awesome-china"><img src="https://raw.githubusercontent.com/phayes/awesome-china/master/badges/很棒-中国.png" width="66"></a>
 
 SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to [wasm](https://webassembly.org).
 
