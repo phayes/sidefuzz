@@ -17,7 +17,7 @@ statrs = "0.10.0"
 rolling-stats = "0.1.0"
 clap = "2.33.0"
 failure = "0.1.5"
-color-backtrace = { version = "0.1" }
+color-backtrace = { version = "0.3" }
 float_duration = {git = "https://github.com/phayes/rust-float-duration"}
 wasmi = {path = "./vendor/wasmi"}
 
