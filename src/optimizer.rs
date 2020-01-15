@@ -76,18 +76,35 @@ where
             let parent_one = &scored[rand::thread_rng().gen_range(0, breed_pool)].pair;
             let parent_two = &scored[rand::thread_rng().gen_range(0, breed_pool)].pair;
 
-            let mut child = InputPair {
-                first: breed_slice(&parent_one.first, &parent_two.first),
-                second: breed_slice(&parent_one.second, &parent_two.second),
-                is_str: self.input_is_str,
-            };
+            let mut child;
+            if self.input_is_str {
+                child = InputPair {
+                    first: breed_str_slice(&parent_one.first, &parent_two.first),
+                    second: breed_str_slice(&parent_one.second, &parent_two.second),
+                    is_str: self.input_is_str,
+                };
+            } else {
+                child = InputPair {
+                    first: breed_slice(&parent_one.first, &parent_two.first),
+                    second: breed_slice(&parent_one.second, &parent_two.second),
+                    is_str: self.input_is_str,
+                };
+            }
 
             // Mutate
             if rand::thread_rng().gen_bool(MUTATION_RATE) {
                 if rand::thread_rng().gen() {
-                    mutate_slice(&mut child.first);
+                    if self.input_is_str {
+                        mutate_str_slice(&mut child.first);
+                    } else {
+                        mutate_slice(&mut child.first);
+                    }
                 } else {
-                    mutate_slice(&mut child.second);
+                    if self.input_is_str {
+                        mutate_str_slice(&mut child.second);
+                    } else {
+                        mutate_slice(&mut child.second);
+                    }
                 }
             }
 
@@ -111,6 +128,19 @@ fn breed_slice(first: &[u8], second: &[u8]) -> Vec<u8> {
     child
 }
 
+fn breed_str_slice(first: &[u8], second: &[u8]) -> Vec<u8> {
+    let mut child: Vec<u8> = breed_slice(first, second);
+
+    // Mutate until it's valid
+    loop {
+        match std::str::from_utf8(&child) {
+            Ok(_) => return child,
+            Err(_) => {}
+        }
+        mutate_slice(&mut child);
+    }
+}
+
 fn mutate_slice(slice: &mut [u8]) {
     // OK to unwrap here, slice should never be empty
     let mutating_gene = slice.choose_mut(&mut rand::thread_rng()).unwrap();
@@ -128,19 +158,54 @@ fn mutate_slice(slice: &mut [u8]) {
     }
 }
 
+fn mutate_str_slice(slice: &mut [u8]) {
+    loop {
+        mutate_slice(slice);
+
+        match std::str::from_utf8(slice) {
+            Ok(_) => return,
+            Err(_) => continue,
+        }
+    }
+}
+
 fn inital_population(len: usize, is_str: bool) -> Vec<InputPair> {
     let mut population = Vec::with_capacity(POPULATION_SIZE);
     for _ in 0..POPULATION_SIZE {
-        population.push(random_individual(len, is_str));
+        if is_str {
+            population.push(random_str_individual(len));
+        } else {
+            population.push(random_individual(len));
+        }
     }
     population
 }
 
-fn random_individual(len: usize, is_str: bool) -> InputPair {
+fn random_individual(len: usize) -> InputPair {
     InputPair {
         first: (0..len).map(|_| rand::random::<u8>()).collect(),
         second: (0..len).map(|_| rand::random::<u8>()).collect(),
-        is_str: is_str,
+        is_str: false,
+    }
+}
+
+fn random_str_individual(len: usize) -> InputPair {
+    use rand::distributions::Alphanumeric;
+
+    // This will create an ascii strings, all under 127 value, we can translate it right to bytes
+    let first: String = rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(len)
+        .collect();
+    let second: String = rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(len)
+        .collect();
+
+    InputPair {
+        first: first.into_bytes(),
+        second: second.into_bytes(),
+        is_str: true,
     }
 }
 
