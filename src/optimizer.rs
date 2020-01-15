@@ -22,16 +22,18 @@ where
 {
     population: Vec<InputPair>,
     fitness: T,
+    input_is_str: bool,
 }
 
 impl<T> Optimizer<T>
 where
     T: FnMut(&[u8], &[u8]) -> ScoredInputPair,
 {
-    pub fn new(len: usize, fitness_function: T) -> Self {
+    pub fn new(len: usize, fitness_function: T, input_is_str: bool) -> Self {
         Optimizer {
-            population: inital_population(len),
+            population: inital_population(len, input_is_str),
             fitness: fitness_function,
+            input_is_str,
         }
     }
 
@@ -77,6 +79,7 @@ where
             let mut child = InputPair {
                 first: breed_slice(&parent_one.first, &parent_two.first),
                 second: breed_slice(&parent_one.second, &parent_two.second),
+                is_str: self.input_is_str,
             };
 
             // Mutate
@@ -125,18 +128,19 @@ fn mutate_slice(slice: &mut [u8]) {
     }
 }
 
-fn inital_population(len: usize) -> Vec<InputPair> {
+fn inital_population(len: usize, is_str: bool) -> Vec<InputPair> {
     let mut population = Vec::with_capacity(POPULATION_SIZE);
     for _ in 0..POPULATION_SIZE {
-        population.push(random_individual(len));
+        population.push(random_individual(len, is_str));
     }
     population
 }
 
-fn random_individual(len: usize) -> InputPair {
+fn random_individual(len: usize, is_str: bool) -> InputPair {
     InputPair {
         first: (0..len).map(|_| rand::random::<u8>()).collect(),
         second: (0..len).map(|_| rand::random::<u8>()).collect(),
+        is_str: is_str,
     }
 }
 
@@ -148,30 +152,35 @@ mod tests {
     #[test]
     fn optimizer_test() {
         let target = b"GENETIC ALGOS!";
-        let mut optimizer = Optimizer::new(target.len(), |first: &[u8], second: &[u8]| {
-            let mut score: f64 = 0.0;
-            for item in [first, second].iter() {
-                for (i, byte) in item.iter().enumerate() {
-                    let diff = if &target[i] > byte {
-                        target[i] - byte
-                    } else if byte > &target[i] {
-                        byte - target[i]
-                    } else {
-                        0
-                    };
-                    score = score - (diff as f64);
+        let mut optimizer = Optimizer::new(
+            target.len(),
+            |first: &[u8], second: &[u8]| {
+                let mut score: f64 = 0.0;
+                for item in [first, second].iter() {
+                    for (i, byte) in item.iter().enumerate() {
+                        let diff = if &target[i] > byte {
+                            target[i] - byte
+                        } else if byte > &target[i] {
+                            byte - target[i]
+                        } else {
+                            0
+                        };
+                        score = score - (diff as f64);
+                    }
                 }
-            }
-            ScoredInputPair {
-                score,
-                highest: 0.0,
-                lowest: 0.0,
-                pair: InputPair {
-                    first: first.to_vec(),
-                    second: second.to_vec(),
-                },
-            }
-        });
+                ScoredInputPair {
+                    score,
+                    highest: 0.0,
+                    lowest: 0.0,
+                    pair: InputPair {
+                        first: first.to_vec(),
+                        second: second.to_vec(),
+                        is_str: false,
+                    },
+                }
+            },
+            false,
+        );
 
         // Run one hundred generations
         for _ in 0..1000 {

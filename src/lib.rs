@@ -62,10 +62,8 @@ pub(crate) mod errors;
 #[cfg(not(any(target_arch = "wasm32")))]
 pub(crate) mod util;
 
-
 // This section contains utility functions used by WASM targets
 // ------------------------------------------------------------
-
 
 /// A function that is opaque to the optimizer, to allow fuzzed functions to
 /// pretend to use outputs to assist in avoiding dead-code elimination.
@@ -76,13 +74,12 @@ pub(crate) mod util;
 /// optimized out. It is good enough that it is used.
 #[inline(never)]
 pub fn black_box<D>(dummy: D) -> D {
-  unsafe {
-    let ret = std::ptr::read_volatile(&dummy);
-    std::mem::forget(dummy);
-    ret
-  }
+    unsafe {
+        let ret = std::ptr::read_volatile(&dummy);
+        std::mem::forget(dummy);
+        ret
+    }
 }
-
 
 // Assign a 1024 byte vector to hold inputs
 lazy_static::lazy_static! {
@@ -92,9 +89,14 @@ lazy_static::lazy_static! {
 // The actual input length (generally less than 1024)
 static mut INPUT_LEN: i32 = 0;
 
+// Is the input a string?
+static mut INPUT_IS_STR: bool = false;
+
 /// Get an input of the desired length.
 /// This function should be called with a constant unchanging len argument.
 /// Calling it with different lengths will result in invalid fuzzing.
+///
+/// If used, `fetch_input` should be used exclusively, and `fetch_str_input` should not be used.
 ///
 /// Example:
 /// ```ignore
@@ -107,15 +109,41 @@ static mut INPUT_LEN: i32 = 0;
 // 2. After it is called once, we call input_pointer and input_len from the host to get a stable pointer to INPUT.
 // 3. Fuzzing starts, we write data to INPUT from the host, then call the exported `fuzz` function.
 pub fn fetch_input(len: i32) -> &'static [u8] {
-  // This use of unsafe since wasm is single-threaded and nothing else is accessing INPUT_LEN.
-  unsafe {
-    if INPUT_LEN == 0 {
-      INPUT_LEN = len;
-      panic!("Input length successfully set. Panicking to unwind and stop execution.");
+    // This use of unsafe since wasm is single-threaded and nothing else is accessing INPUT_LEN.
+    unsafe {
+        if INPUT_LEN == 0 {
+            INPUT_LEN = len;
+            panic!("Input length successfully set. Panicking to unwind and stop execution.");
+        }
     }
-  }
 
-  &INPUT[0..len as usize]
+    &INPUT[0..len as usize]
+}
+
+/// Get an input of the desired length, as a string.
+/// This function should be called with a constant unchanging len argument.
+/// Calling it with different lengths will result in invalid fuzzing.
+///
+/// If used, `fetch_str_input` should be used exclusively, and `fetch_input` should not be used.
+///
+/// Example:
+/// ```ignore
+/// let input = sidefuzz::fetch_str_input(32); // get 32 bytes of input as a string
+/// sidefuzz::black_box(my_contant_time_fn(input));
+/// ```
+//
+// See `fetch_input` for some caveats on how this weird function is used
+pub fn fetch_str_input(len: i32) -> &'static str {
+    // This use of unsafe since wasm is single-threaded and nothing else is accessing INPUT_LEN.
+    unsafe {
+        if INPUT_LEN == 0 {
+            INPUT_LEN = len;
+            INPUT_IS_STR = true;
+            panic!("Input length successfully set. Panicking to unwind and stop execution.");
+        }
+    }
+
+    unsafe { std::str::from_utf8_unchecked(&INPUT[0..len as usize]) }
 }
 
 /// Get a pointer to the input array
@@ -125,7 +153,7 @@ pub fn fetch_input(len: i32) -> &'static [u8] {
 #[doc(hidden)]
 #[no_mangle]
 pub extern "C" fn input_pointer() -> i32 {
-  INPUT.as_ptr() as i32
+    INPUT.as_ptr() as i32
 }
 
 /// Get the length of the input array
@@ -135,5 +163,19 @@ pub extern "C" fn input_pointer() -> i32 {
 #[doc(hidden)]
 #[no_mangle]
 pub extern "C" fn input_len() -> i32 {
-  unsafe { INPUT_LEN }
+    unsafe { INPUT_LEN }
+}
+
+/// Check if the input should be a string
+/// This needs to be public so we can call it across host/wasm boundary,
+/// but it should be considered a "private" function to sidefuzz.
+/// It's API is not stable and may be subject to change
+#[doc(hidden)]
+#[no_mangle]
+pub extern "C" fn input_is_str() -> i32 {
+    if unsafe { INPUT_IS_STR } {
+        return 1;
+    } else {
+        return 0;
+    }
 }
