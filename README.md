@@ -8,7 +8,7 @@
 <a href="https://github.com/taibangle/awesome-china"><img src="https://raw.githubusercontent.com/phayes/awesome-china/master/badges/awesome-china.png" width="98"></a>
 <a href="https://github.com/taibangle/awesome-china"><img src="https://raw.githubusercontent.com/phayes/awesome-china/master/badges/很棒-中国.png" width="66"></a>
 
-SideFuzz is an adaptive fuzzer that uses a genetic-algorithim optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to [wasm](https://webassembly.org).
+SideFuzz is an adaptive fuzzer that uses a genetic-algorithm optimizer in combination with t-statistics to find side-channel (timing) vulnerabilities in cryptography compiled to [wasm](https://webassembly.org).
 
 Fuzzing Targets can be found here: https://github.com/phayes/sidefuzz-targets
 
@@ -16,13 +16,13 @@ Fuzzing Targets can be found here: https://github.com/phayes/sidefuzz-targets
 
 SideFuzz works by counting instructions executed in the [wasmi](https://github.com/paritytech/wasmi) wasm interpreter. It works in two phases:
 
-**Phase 1.** Uses a genetic-algorithim optimizer that tries to maximize the difference in instructions executed between two different inputs. It will continue optimizing until subsequent generations of input-pairs no longer produce any meaningful differences in the number of instructions executed. This means that it will optimize until it finds finds a local optimum in the fitness of input pairs.
+**Phase 1.** Uses a genetic-algorithm optimizer that tries to maximize the difference in instructions executed between two different inputs. It will continue optimizing until subsequent generations of input-pairs no longer produce any meaningful differences in the number of instructions executed. This means that it will optimize until it finds finds a local optimum in the fitness of input pairs.
 
 **Phase 2.** Once a local optimum is found, the leading input-pairs are sampled until either:
 
 - A large t-statistic (p = 0.001) is found, indicating that there is a statistically significant difference in running-time between the two inputs. This is indicative of a timing side-channel vulnerability; or
 
-- The t-statistic stays low, even after significant sampling. In this case the candidate input pairs are rejected and SideFuzz returns to phase 1, resuming the genetic-algorithim optimizer to find another local optimum.
+- The t-statistic stays low, even after significant sampling. In this case the candidate input pairs are rejected and SideFuzz returns to phase 1, resuming the genetic-algorithm optimizer to find another local optimum.
 
 ### What it gets you
 
@@ -89,7 +89,7 @@ The wasm module should provide four exports:
 
 2. A function named "fuzz". This function will be repeatedly called during the fuzzing process.
 
-3. A function named "input_pointer" that returns an i32 pointer to a location in linear memory where we can can write an array of input bytes. The "fuzz" fuction should read this array of bytes as input for it's fuzzing.
+3. A function named "input_pointer" that returns an i32 pointer to a location in linear memory where we can can write an array of input bytes. The "fuzz" function should read this array of bytes as input for it's fuzzing.
 
 4. A function named "input_len" that returns an i32 with the desired length of input in bytes.
 
@@ -99,9 +99,9 @@ The wasm module should provide four exports:
 
 Web Assembly allows us to precisely track the number of instructions executed, the type of instructions executed, and the amount of memory used. This is much more precise than other methods such as tracking wall-time or counting CPU cycles.
 
-#### 2. Why do I alway need to build in release mode?
+#### 2. Why do I always need to build in release mode?
 
-Many constant-time functions include calls to variable-time `debug_assert!()` functions that get removed during a release build. Rust's and LLVM optimizer may also mangle supposedly constant-time code in the name of optimization, introducing subtle timing vulnerabilities. Runnig in release mode let's us surface these issues.
+Many constant-time functions include calls to variable-time `debug_assert!()` functions that get removed during a release build. Rust's and LLVM optimizer may also mangle supposedly constant-time code in the name of optimization, introducing subtle timing vulnerabilities. Running in release mode let's us surface these issues.
 
 #### 3. I need an RNG (Random Number Generator). What do?
 
@@ -125,7 +125,7 @@ You should use [`lazy_static`](https://crates.io/crates/lazy_static) to do any s
 
 2. `ctgrind`. Tool for checking that functions are constant time using Valgrind. https://github.com/RustCrypto/utils/tree/master/ctgrind
 
-## Furthur Reading
+## Further Reading
 
 1. "DifFuzz: Differential Fuzzing for Side-Channel Analysis", Nilizadeh, Noller, Păsăreanu.
    https://arxiv.org/abs/1811.07005
