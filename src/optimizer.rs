@@ -192,7 +192,7 @@ fn random_individual(len: usize) -> InputPair {
 fn random_str_individual(len: usize) -> InputPair {
     use rand::distributions::Alphanumeric;
 
-    // This will create an ascii strings, all under 127 value, we can translate it right to bytes
+    // This will create ascii strings, all under 127 in value, we can translate it right to bytes
     let first: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(len)
