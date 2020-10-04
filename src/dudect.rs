@@ -20,6 +20,8 @@ pub struct DudeCT<'a> {
     module: WasmModule,
     first_stats: Stats<f64>,
     second_stats: Stats<f64>,
+    first_stats_count: usize,
+    second_stats_count: usize,
 }
 
 impl<'a> DudeCT<'a> {
@@ -31,9 +33,8 @@ impl<'a> DudeCT<'a> {
         second: &'a [u8],
         module: WasmModule,
     ) -> Result<Self, SideFuzzError> {
-
         if module.fuzz_len() != first.len() || module.fuzz_len() != second.len() {
-            return Err(SideFuzzError::InputsDifferentSizes)
+            return Err(SideFuzzError::InputsDifferentSizes);
         }
 
         Ok(DudeCT {
@@ -45,11 +46,13 @@ impl<'a> DudeCT<'a> {
             module,
             first_stats: Stats::new(),
             second_stats: Stats::new(),
+            first_stats_count: 0,
+            second_stats_count: 0,
         })
     }
 
     pub fn len(&self) -> usize {
-        self.first_stats.count + self.second_stats.count
+        self.first_stats_count + self.second_stats_count
     }
 
     pub fn sample(&mut self, num_samples: u64) -> Result<(f64, DudeResult), SideFuzzError> {
@@ -57,42 +60,45 @@ impl<'a> DudeCT<'a> {
             let first_instructions = self.module.count_instructions(self.first)?;
             let second_instructions = self.module.count_instructions(self.second)?;
             self.first_stats.update(first_instructions as f64);
+            self.first_stats_count += 1;
             self.second_stats.update(second_instructions as f64);
+            self.second_stats_count += 1;
         }
 
-        let t = calculate_t(&self.first_stats, &self.second_stats);
+        let t = self.calculate_t();
 
         // Return results when t value is above threshold
         if t >= self.t_threshold {
             Ok((t, DudeResult::Ok))
         }
         // Check if we should give up
-        else if self.first_stats.count > self.fail_min_samples && t <= self.t_fail {
+        else if self.first_stats_count > self.fail_min_samples && t <= self.t_fail {
             Ok((t, DudeResult::Err))
         } else {
             // Neither success nor failure, keep going.
             Ok((t, DudeResult::Progress))
         }
     }
-}
 
-fn calculate_t(first: &Stats<f64>, second: &Stats<f64>) -> f64 {
-    let first_mean = first.mean;
-    let second_mean = second.mean;
+    fn calculate_t(&self) -> f64 {
+        let first_mean = self.first_stats.mean;
+        let second_mean = self.second_stats.mean;
 
-    let first_std_dev = first.std_dev;
-    let second_std_dev = first.std_dev;
+        let first_std_dev = self.first_stats.std_dev;
+        let second_std_dev = self.second_stats.std_dev;
 
-    let first_variance = first_std_dev * first_std_dev;
-    let second_variance = second_std_dev * second_std_dev;
+        let first_variance = first_std_dev * first_std_dev;
+        let second_variance = second_std_dev * second_std_dev;
 
-    let first_sample_size = first.count as f64;
-    let second_sample_size = second.count as f64;
+        let first_sample_size = self.first_stats_count as f64;
+        let second_sample_size = self.second_stats_count as f64;
 
-    let t = (first_mean - second_mean)
-        / ((first_variance / first_sample_size) + (second_variance / second_sample_size)).sqrt();
+        let t = (first_mean - second_mean)
+            / ((first_variance / first_sample_size) + (second_variance / second_sample_size))
+                .sqrt();
 
-    t.abs()
+        t.abs()
+    }
 }
 
 #[cfg(test)]

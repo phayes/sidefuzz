@@ -94,6 +94,7 @@
 //! }
 //! ```
 
+#![allow(warnings)]
 #![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 //// alloc is required in no_std
@@ -129,7 +130,6 @@ use std::error;
 
 #[cfg(not(feature = "std"))]
 extern crate libm;
-
 
 // -- START Instruction counting hack --
 use std::sync::atomic::{AtomicU64, Ordering};
