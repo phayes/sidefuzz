@@ -1,0 +1,103 @@
+name: Publish extra packages (deb, scoop)
+
+# Runs after cargo-dist's release.yml has created the GitHub Release and
+# uploaded all platform archives, so those assets are guaranteed to exist.
+on:
+  release:
+    types: [published]
+
+jobs:
+  deb:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            arch: amd64
+          - target: aarch64-unknown-linux-gnu
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release archive
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir dl
+          gh release download "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "sidefuzz-${{ matrix.target }}.tar.xz" \
+            --dir dl
+
+      - name: Extract binary
+        run: |
+          mkdir extracted
+          # cargo-dist wraps archive contents in a sidefuzz-<target>/ directory.
+          tar -xJf "dl/sidefuzz-${{ matrix.target }}.tar.xz" -C extracted --strip-components=1
+
+      - name: Build .deb
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          ./scripts/build-deb.sh sidefuzz "$VERSION" "${{ matrix.arch }}" \
+            extracted/sidefuzz \
+            "Fuzzer to automatically find side-channel (timing) vulnerabilities" \
+            "https://github.com/phayes/sidefuzz" \
+            extracted
+
+      - name: Upload .deb to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            sidefuzz_*_${{ matrix.arch }}.deb
+
+  scoop:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download windows archive + checksum
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir dl
+          gh release download "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "sidefuzz-x86_64-pc-windows-msvc.zip*" \
+            --dir dl
+
+      - name: Generate manifest
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          SHA=$(awk '{print $1}' dl/sidefuzz-x86_64-pc-windows-msvc.zip.sha256)
+          ./scripts/gen-scoop-manifest.sh sidefuzz "$VERSION" \
+            "Fuzzer to automatically find side-channel (timing) vulnerabilities" \
+            "https://github.com/phayes/sidefuzz" \
+            "MIT OR Apache-2.0" \
+            sidefuzz "$TAG" \
+            sidefuzz-x86_64-pc-windows-msvc.zip sidefuzz "$SHA"
+
+      - name: Publish to scoop-bucket
+        env:
+          GH_TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/phayes/scoop-bucket.git" bucket-repo
+          cp sidefuzz.json bucket-repo/bucket/sidefuzz.json
+          cd bucket-repo
+          git config user.email "patrick.d.hayes@gmail.com"
+          git config user.name "Patrick Hayes"
+          git add bucket/sidefuzz.json
+          if git diff --cached --quiet; then
+            echo "manifest unchanged, nothing to push"
+            exit 0
+          fi
+          git commit -m "sidefuzz ${{ github.event.release.tag_name }}"
+          git push
