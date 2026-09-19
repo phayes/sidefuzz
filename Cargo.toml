@@ -6,6 +6,7 @@ edition = "2018"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/phayes/sidefuzz"
+homepage = "https://github.com/phayes/sidefuzz"
 description = "Fuzzer to automatically find side-channel (timing) vulnerabilities"
 keywords = ["fuzzing", "constant-time", "cryptography", "wasm"]
 categories = ["cryptography", "development-tools::testing"]
@@ -27,3 +28,8 @@ lazy_static = "1.4.0"
 [[bin]]
 name = "sidefuzz"
 doc = false
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
